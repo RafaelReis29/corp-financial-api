@@ -1,5 +1,8 @@
 # Corp Financial API
 
+<img width="462" height="492" alt="corp-api-logo" src="https://github.com/user-attachments/assets/5976111f-4176-4faf-8479-8830bcbfd0e4" />
+
+
 Este projeto é uma API de sistema financeiro corporativo, com operação entre empresas, contatos, contratos, meios de pagamento e faturas, em que cada fatura pertence a um contrato, cada contrato pertence a uma empresa, cada contato pertence a uma empresa, o que mantém rastreabilidade entre cobrança, contrato e cliente.
 
 Os dados de exemplo usam empresas e personagens da cultura pop, como Stark, Wayne, Oscorp, Umbrella, InGen, Vought e outras, com status em português, datas e valores em BRL, o que deixa a base inicial reconhecível e fácil de explorar.
