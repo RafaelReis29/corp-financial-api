@@ -209,8 +209,8 @@ body {
   box-sizing: border-box !important;
   margin: 0 auto 20px !important;
   max-width: 1460px !important;
-  padding: 16px 24px !important;
-  width: calc(100% - 40px) !important;
+  padding: 16px 20px !important;
+  width: 100% !important;
 }
 
 .swagger-ui .scheme-container .schemes > label,
@@ -372,6 +372,32 @@ body {
   color: var(--text-muted) !important;
   font-size: 14px !important;
   line-height: 1.65 !important;
+}
+
+.swagger-ui .opblock .opblock-section-header,
+html.dark-mode .swagger-ui .opblock .opblock-section-header,
+html.dark-mode .swagger-ui .opblock.opblock-get .opblock-section-header,
+html.dark-mode .swagger-ui .opblock.opblock-post .opblock-section-header,
+html.dark-mode .swagger-ui .opblock.opblock-put .opblock-section-header,
+html.dark-mode .swagger-ui .opblock.opblock-delete .opblock-section-header,
+html.dark-mode .swagger-ui .opblock.opblock-patch .opblock-section-header {
+  background: rgba(0, 0, 0, 0.28) !important;
+  border-bottom: 1px solid var(--line) !important;
+  border-top: none !important;
+  box-shadow: none !important;
+  padding: 6px 14px !important;
+}
+
+.swagger-ui .opblock .tab-header .tab-item h4 span,
+html.dark-mode .swagger-ui .opblock .tab-header .tab-item h4 span {
+  color: var(--text) !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+}
+
+.swagger-ui .opblock .tab-header .tab-item.active h4 span::after,
+html.dark-mode .swagger-ui .opblock .tab-header .tab-item.active h4 span::after {
+  background: var(--brand-mint) !important;
 }
 
 .swagger-ui .opblock-section-header h4,
@@ -596,6 +622,116 @@ body {
   color: var(--text-faint) !important;
 }
 
+/* ---------- schemas (json-schema 2020-12): sem cromo nativo ---------- */
+.swagger-ui .json-schema-2020-12-accordion,
+html.dark-mode .swagger-ui .json-schema-2020-12-accordion {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  background: transparent !important;
+  border: none !important;
+  color: var(--text) !important;
+  cursor: pointer !important;
+  font-size: 16px !important;
+  font-weight: 800 !important;
+  padding: 4px 8px 4px 0 !important;
+}
+
+.swagger-ui .json-schema-2020-12-accordion:hover,
+html.dark-mode .swagger-ui .json-schema-2020-12-accordion:hover {
+  color: var(--brand-mint) !important;
+}
+
+.swagger-ui .json-schema-2020-12-accordion__icon,
+html.dark-mode .swagger-ui .json-schema-2020-12-accordion__icon {
+  color: var(--brand-mint) !important;
+}
+
+.swagger-ui .json-schema-2020-12__title,
+html.dark-mode .swagger-ui .json-schema-2020-12__title {
+  color: var(--text) !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+}
+
+.swagger-ui .json-schema-2020-12-property .json-schema-2020-12__title,
+html.dark-mode .swagger-ui .json-schema-2020-12-property .json-schema-2020-12__title {
+  color: var(--text) !important;
+  font-family: "JetBrains Mono", "Fira Code", Consolas, monospace !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+}
+
+.swagger-ui .json-schema-2020-12-keyword__name--primary,
+html.dark-mode .swagger-ui .json-schema-2020-12-keyword__name--primary {
+  color: var(--text) !important;
+  font-size: 14px !important;
+  font-style: normal !important;
+  font-weight: 700 !important;
+}
+
+.swagger-ui .json-schema-2020-12-keyword__name--secondary,
+.swagger-ui .json-schema-2020-12-keyword--description,
+html.dark-mode .swagger-ui .json-schema-2020-12-keyword--description {
+  color: var(--text-muted) !important;
+  font-size: 13px !important;
+}
+
+.swagger-ui .json-schema-2020-12-keyword,
+html.dark-mode .swagger-ui .json-schema-2020-12-keyword {
+  color: var(--text-muted) !important;
+  font-size: 13px !important;
+}
+
+/* pílulas de formato/restrição: texto escuro sobre fundo colorido */
+.swagger-ui .json-schema-2020-12__constraint,
+html.dark-mode .swagger-ui .json-schema-2020-12__constraint {
+  background-color: var(--post) !important;
+  border-radius: 6px !important;
+  color: var(--post-ink) !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  padding: 2px 8px !important;
+}
+
+.swagger-ui .json-schema-2020-12__constraint--string,
+html.dark-mode .swagger-ui .json-schema-2020-12__constraint--string {
+  background-color: var(--put) !important;
+  color: var(--put-ink) !important;
+}
+
+/* expandir/recolher tudo: sem cromo nativo, legível */
+.swagger-ui .json-schema-2020-12-expand-deep-button,
+html.dark-mode .swagger-ui .json-schema-2020-12-expand-deep-button {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  background: transparent !important;
+  border: none !important;
+  color: var(--brand-mint) !important;
+  cursor: pointer !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+}
+
+.swagger-ui .json-schema-2020-12-expand-deep-button:hover,
+html.dark-mode .swagger-ui .json-schema-2020-12-expand-deep-button:hover {
+  text-decoration: underline !important;
+}
+
+/* linhas de propriedade com respiro */
+.swagger-ui .json-schema-2020-12-property,
+html.dark-mode .swagger-ui .json-schema-2020-12-property {
+  margin: 10px 0 !important;
+}
+
+/* chevron dos toggles clássicos sempre visível no escuro */
+.swagger-ui .model-toggle::after,
+html.dark-mode .swagger-ui .model-toggle::after {
+  background: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath fill='%23e4e6e6' d='M10 6 8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z'/%3E%3C/svg%3E") 50% no-repeat !important;
+  background-size: 100% !important;
+  height: 20px !important;
+  width: 20px !important;
+}
+
 /* ================= diálogos ================= */
 .swagger-ui .dialog-ux .modal-ux,
 .dark-mode .swagger-ui .dialog-ux .modal-ux {
@@ -619,12 +755,51 @@ body {
   color: var(--brand-mint-ink) !important;
 }
 
-/* copiar / setas mantêm legibilidade no escuro */
+/* copiar mantém legibilidade no escuro */
 .swagger-ui .copy-to-clipboard button,
-.swagger-ui .model-toggle::after,
 .dark-mode .swagger-ui .copy-to-clipboard button {
   background: rgba(125, 240, 166, 0.14) !important;
   color: var(--brand-mint) !important;
+}
+
+/* ---------- linha da operação: copiar x seta sem sobrepor ---------- */
+.swagger-ui .opblock .opblock-summary,
+html.dark-mode .swagger-ui .opblock .opblock-summary {
+  gap: 10px !important;
+  padding-right: 16px !important;
+}
+
+.swagger-ui .opblock .opblock-summary .view-line-link.copy-to-clipboard,
+html.dark-mode .swagger-ui .opblock .opblock-summary .view-line-link.copy-to-clipboard {
+  background: transparent !important;
+  bottom: auto !important;
+  flex-shrink: 0 !important;
+  height: 30px !important;
+  margin: 0 !important;
+  position: static !important;
+  right: auto !important;
+  width: 30px !important;
+}
+
+.swagger-ui .opblock .opblock-summary .view-line-link.copy-to-clipboard button,
+html.dark-mode .swagger-ui .opblock .opblock-summary .view-line-link.copy-to-clipboard button {
+  border-radius: 8px !important;
+  height: 30px !important;
+  width: 30px !important;
+}
+
+.swagger-ui .opblock-control-arrow,
+html.dark-mode .swagger-ui .opblock-control-arrow {
+  color: var(--text-muted) !important;
+  flex-shrink: 0 !important;
+  margin-left: 2px !important;
+}
+
+.swagger-ui .opblock-control-arrow svg,
+html.dark-mode .swagger-ui .opblock-control-arrow svg {
+  fill: var(--text-muted) !important;
+  height: 20px !important;
+  width: 20px !important;
 }
 
 /* ================= scrollbar + mobile ================= */

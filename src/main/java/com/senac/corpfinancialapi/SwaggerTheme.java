@@ -32,7 +32,7 @@ import org.springframework.web.servlet.resource.TransformedResource;
 @Configuration
 public class SwaggerTheme {
 
-    private static final String THEME_LINK = "<link rel=\"stylesheet\" type=\"text/css\" href=\"/static/swagger-theme.css?v=3\">";
+    private static final String THEME_LINK = "<link rel=\"stylesheet\" type=\"text/css\" href=\"/static/swagger-theme.css?v=7\">";
 
     @Bean
     SwaggerIndexTransformer themedSwaggerIndexTransformer(
