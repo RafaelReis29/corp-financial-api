@@ -1,7 +1,6 @@
 # Corp Financial API
 
-<img width="462" height="492" alt="corp-api-logo" src="https://github.com/user-attachments/assets/39008cdb-730b-4160-89f1-f12f55d92076" />
-
+<img width="405" height="397" alt="Corp API Logo" src="https://github.com/user-attachments/assets/90e1d154-68ad-4387-bc20-123059565f1a" />
 
 Este projeto é uma API de sistema financeiro corporativo/B2B, com operação entre empresas, contatos, contratos, meios de pagamento e faturas, em que cada fatura pertence a um contrato, cada contrato pertence a uma empresa, cada contato pertence a uma empresa, o que mantém rastreabilidade entre cobrança, contrato e cliente.
 
