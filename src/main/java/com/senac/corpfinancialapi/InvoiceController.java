@@ -2,6 +2,7 @@ package com.senac.corpfinancialapi;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -41,6 +42,8 @@ public class InvoiceController {
 
     @Operation(summary = "Listar faturas", description = "Retorna lista paginada de faturas com links de navegação. Use page, size e sort para navegar.")
     @ApiResponse(responseCode = "200", description = "Lista retornada com sucesso")
+    @ApiResponse(responseCode = "400", description = "Campo de ordenação inválido",
+            content = @Content(mediaType = "application/json", schema = @Schema(type = "object")))
     @GetMapping("/invoices")
     public ResponseEntity<PagedModel<EntityModel<Invoice>>> getAllInvoices(
             @ParameterObject @PageableDefault(size = 10, page = 0, sort = "id") Pageable pageable) {
@@ -50,8 +53,10 @@ public class InvoiceController {
     }
 
     @Operation(summary = "Criar fatura", description = "Cria uma fatura vinculada a um contrato. Envie contractId com o id de um contrato existente, description, amount, dueDate, status e paymentMethodId quando houver. Para uma fatura em aberto, use status PENDENTE e deixe paidAt ausente. Ao dar baixa, envie status PAGO com paidAt preenchido.")
-    @ApiResponse(responseCode = "201", description = "Fatura criada com sucesso")
-    @ApiResponse(responseCode = "400", description = "Dados inválidos. Confira os campos obrigatórios")
+    @ApiResponse(responseCode = "201", description = "Fatura criada com sucesso",
+            headers = @Header(name = "Location", description = "URI do recurso criado", schema = @Schema(type = "string", format = "uri")))
+    @ApiResponse(responseCode = "400", description = "Corpo da requisição inválido",
+            content = @Content(mediaType = "application/json", schema = @Schema(type = "object")))
     @io.swagger.v3.oas.annotations.parameters.RequestBody(required = true)
     @PostMapping("/invoices")
     public ResponseEntity<EntityModel<Invoice>> newInvoice(
@@ -72,7 +77,10 @@ public class InvoiceController {
 
     @Operation(summary = "Buscar fatura por id", description = "Retorna uma fatura com links de navegação. Use o id retornado na listagem ou na criação.")
     @ApiResponse(responseCode = "200", description = "Fatura encontrada")
-    @ApiResponse(responseCode = "404", description = "Fatura não encontrada")
+    @ApiResponse(responseCode = "400", description = "Identificador inválido",
+            content = @Content(mediaType = "application/json", schema = @Schema(type = "object")))
+    @ApiResponse(responseCode = "404", description = "Fatura não encontrada",
+            content = @Content(mediaType = "text/plain", schema = @Schema(type = "string")))
     @GetMapping("/invoices/{id}")
     public EntityModel<Invoice> getInvoiceById(@Parameter(description = "Id da fatura") @PathVariable Long id) {
         Invoice invoice = repository.findById(id).orElseThrow(() -> new InvoiceNotFoundException(id));
@@ -81,8 +89,10 @@ public class InvoiceController {
 
     @Operation(summary = "Atualizar ou criar fatura", description = "Atualiza todos os campos da fatura com o id informado. Se o id não existir, cria uma fatura nova com id gerado pelo servidor. Para dar baixa, envie status PAGO com paidAt preenchido.")
     @ApiResponse(responseCode = "200", description = "Fatura atualizada com sucesso")
-    @ApiResponse(responseCode = "201", description = "Fatura criada com id gerado")
-    @ApiResponse(responseCode = "400", description = "Dados inválidos. Confira os campos obrigatórios")
+    @ApiResponse(responseCode = "201", description = "Fatura criada com id gerado",
+            headers = @Header(name = "Location", description = "URI do recurso criado", schema = @Schema(type = "string", format = "uri")))
+    @ApiResponse(responseCode = "400", description = "Identificador ou corpo da requisição inválido",
+            content = @Content(mediaType = "application/json", schema = @Schema(type = "object")))
     @PutMapping("/invoices/{id}")
     public ResponseEntity<EntityModel<Invoice>> updateOrCreateInvoice(@Parameter(description = "Id da fatura") @PathVariable Long id, @RequestBody @Valid Invoice newInvoice) {
         return repository.findById(id)
@@ -105,10 +115,12 @@ public class InvoiceController {
     }
 
     @Operation(summary = "Excluir fatura", description = "Exclui a fatura com o id informado. A resposta não possui conteúdo no corpo.")
-    @ApiResponse(responseCode = "204", description = "Fatura excluída com sucesso")
-    @ApiResponse(responseCode = "404", description = "Fatura não encontrada")
+    @ApiResponse(responseCode = "204", description = "Fatura excluída com sucesso", content = @Content)
+    @ApiResponse(responseCode = "400", description = "Identificador inválido",
+            content = @Content(mediaType = "application/json", schema = @Schema(type = "object")))
+    @ApiResponse(responseCode = "404", description = "Fatura não encontrada", content = @Content)
     @DeleteMapping("/invoices/{id}")
-    public ResponseEntity<?> deleteInvoice(@Parameter(description = "Id da fatura") @PathVariable Long id) {
+    public ResponseEntity<Void> deleteInvoice(@Parameter(description = "Id da fatura") @PathVariable Long id) {
         var invoice = repository.findById(id);
         if (invoice.isEmpty())
             return ResponseEntity.notFound().build();

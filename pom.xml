@@ -10,7 +10,7 @@
     </parent>
     <groupId>com.senac</groupId>
     <artifactId>corp-financial-api</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>1.0.1</version>
     <name>corp-financial-api</name>
     <description>corp-financial-api</description>
     <url/>

@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -43,6 +44,8 @@ public class ContactController {
 
     @Operation(summary = "Listar contatos", description = "Retorna lista paginada de contatos com links de navegação. Use page, size e sort para navegar.")
     @ApiResponse(responseCode = "200", description = "Lista retornada com sucesso")
+    @ApiResponse(responseCode = "400", description = "Campo de ordenação inválido",
+            content = @Content(mediaType = "application/json", schema = @Schema(type = "object")))
     @GetMapping("/contacts")
     public ResponseEntity<PagedModel<EntityModel<Contact>>> getAllContacts(
             @ParameterObject @PageableDefault(size = 10, page = 0, sort = "id") Pageable pageable) {
@@ -52,8 +55,10 @@ public class ContactController {
     }
 
     @Operation(summary = "Criar contato", description = "Cria um contato vinculado a uma empresa. Envie companyId com o id de uma empresa existente, além de name, role, email, phone, isPrimary e active. Os campos createdAt e updatedAt são preenchidos pelo servidor quando ausentes.")
-    @ApiResponse(responseCode = "201", description = "Contato criado com sucesso")
-    @ApiResponse(responseCode = "400", description = "Dados inválidos. Confira os campos obrigatórios")
+    @ApiResponse(responseCode = "201", description = "Contato criado com sucesso",
+            headers = @Header(name = "Location", description = "URI do recurso criado", schema = @Schema(type = "string", format = "uri")))
+    @ApiResponse(responseCode = "400", description = "Corpo da requisição inválido",
+            content = @Content(mediaType = "application/json", schema = @Schema(type = "object")))
     @io.swagger.v3.oas.annotations.parameters.RequestBody(required = true)
     @PostMapping("/contacts")
     public ResponseEntity<EntityModel<Contact>> newContact(
@@ -76,7 +81,10 @@ public class ContactController {
 
     @Operation(summary = "Buscar contato por id", description = "Retorna um contato com links de navegação. Use o id retornado na listagem ou na criação.")
     @ApiResponse(responseCode = "200", description = "Contato encontrado")
-    @ApiResponse(responseCode = "404", description = "Contato não encontrado")
+    @ApiResponse(responseCode = "400", description = "Identificador inválido",
+            content = @Content(mediaType = "application/json", schema = @Schema(type = "object")))
+    @ApiResponse(responseCode = "404", description = "Contato não encontrado",
+            content = @Content(mediaType = "text/plain", schema = @Schema(type = "string")))
     @GetMapping("/contacts/{id}")
     public EntityModel<Contact> getContactById(@Parameter(description = "Id do contato") @PathVariable Long id) {
         Contact contact = repository.findById(id).orElseThrow(() -> new ContactNotFoundException(id));
@@ -85,8 +93,10 @@ public class ContactController {
 
     @Operation(summary = "Atualizar ou criar contato", description = "Atualiza todos os campos do contato com o id informado. Se o id não existir, cria um contato novo com id gerado pelo servidor. O campo createdAt original é mantido e o campo updatedAt é atualizado pelo servidor.")
     @ApiResponse(responseCode = "200", description = "Contato atualizado com sucesso")
-    @ApiResponse(responseCode = "201", description = "Contato criado com id gerado")
-    @ApiResponse(responseCode = "400", description = "Dados inválidos. Confira os campos obrigatórios")
+    @ApiResponse(responseCode = "201", description = "Contato criado com id gerado",
+            headers = @Header(name = "Location", description = "URI do recurso criado", schema = @Schema(type = "string", format = "uri")))
+    @ApiResponse(responseCode = "400", description = "Identificador ou corpo da requisição inválido",
+            content = @Content(mediaType = "application/json", schema = @Schema(type = "object")))
     @PutMapping("/contacts/{id}")
     public ResponseEntity<EntityModel<Contact>> updateOrCreateContact(@Parameter(description = "Id do contato") @PathVariable Long id, @RequestBody @Valid Contact newContact) {
         return repository.findById(id)
@@ -114,10 +124,12 @@ public class ContactController {
     }
 
     @Operation(summary = "Excluir contato", description = "Exclui o contato com o id informado. A resposta não possui conteúdo no corpo.")
-    @ApiResponse(responseCode = "204", description = "Contato excluído com sucesso")
-    @ApiResponse(responseCode = "404", description = "Contato não encontrado")
+    @ApiResponse(responseCode = "204", description = "Contato excluído com sucesso", content = @Content)
+    @ApiResponse(responseCode = "400", description = "Identificador inválido",
+            content = @Content(mediaType = "application/json", schema = @Schema(type = "object")))
+    @ApiResponse(responseCode = "404", description = "Contato não encontrado", content = @Content)
     @DeleteMapping("/contacts/{id}")
-    public ResponseEntity<?> deleteContact(@Parameter(description = "Id do contato") @PathVariable Long id) {
+    public ResponseEntity<Void> deleteContact(@Parameter(description = "Id do contato") @PathVariable Long id) {
         var contact = repository.findById(id);
         if (contact.isEmpty())
             return ResponseEntity.notFound().build();

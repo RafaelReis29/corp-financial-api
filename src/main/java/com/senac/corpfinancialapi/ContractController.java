@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -43,6 +44,8 @@ public class ContractController {
 
     @Operation(summary = "Listar contratos", description = "Retorna lista paginada de contratos com links de navegação. Use page, size e sort para navegar.")
     @ApiResponse(responseCode = "200", description = "Lista retornada com sucesso")
+    @ApiResponse(responseCode = "400", description = "Campo de ordenação inválido",
+            content = @Content(mediaType = "application/json", schema = @Schema(type = "object")))
     @GetMapping("/contracts")
     public ResponseEntity<PagedModel<EntityModel<Contract>>> getAllContracts(
             @ParameterObject @PageableDefault(size = 10, page = 0, sort = "id") Pageable pageable) {
@@ -52,8 +55,10 @@ public class ContractController {
     }
 
     @Operation(summary = "Criar contrato", description = "Cria um contrato vinculado a uma empresa. Envie companyId com o id de uma empresa existente, title, description, totalValue, currency, startDate, endDate e status. Use currency com o código da moeda, por exemplo BRL. Os campos createdAt e updatedAt são preenchidos pelo servidor quando ausentes.")
-    @ApiResponse(responseCode = "201", description = "Contrato criado com sucesso")
-    @ApiResponse(responseCode = "400", description = "Dados inválidos. Confira os campos obrigatórios")
+    @ApiResponse(responseCode = "201", description = "Contrato criado com sucesso",
+            headers = @Header(name = "Location", description = "URI do recurso criado", schema = @Schema(type = "string", format = "uri")))
+    @ApiResponse(responseCode = "400", description = "Corpo da requisição inválido",
+            content = @Content(mediaType = "application/json", schema = @Schema(type = "object")))
     @io.swagger.v3.oas.annotations.parameters.RequestBody(required = true)
     @PostMapping("/contracts")
     public ResponseEntity<EntityModel<Contract>> newContract(
@@ -76,7 +81,10 @@ public class ContractController {
 
     @Operation(summary = "Buscar contrato por id", description = "Retorna um contrato com links de navegação. Use o id retornado na listagem ou na criação.")
     @ApiResponse(responseCode = "200", description = "Contrato encontrado")
-    @ApiResponse(responseCode = "404", description = "Contrato não encontrado")
+    @ApiResponse(responseCode = "400", description = "Identificador inválido",
+            content = @Content(mediaType = "application/json", schema = @Schema(type = "object")))
+    @ApiResponse(responseCode = "404", description = "Contrato não encontrado",
+            content = @Content(mediaType = "text/plain", schema = @Schema(type = "string")))
     @GetMapping("/contracts/{id}")
     public EntityModel<Contract> getContractById(@Parameter(description = "Id do contrato") @PathVariable Long id) {
         Contract contract = repository.findById(id).orElseThrow(() -> new ContractNotFoundException(id));
@@ -85,8 +93,10 @@ public class ContractController {
 
     @Operation(summary = "Atualizar ou criar contrato", description = "Atualiza todos os campos do contrato com o id informado. Se o id não existir, cria um contrato novo com id gerado pelo servidor. O campo createdAt original é mantido e o campo updatedAt é atualizado pelo servidor.")
     @ApiResponse(responseCode = "200", description = "Contrato atualizado com sucesso")
-    @ApiResponse(responseCode = "201", description = "Contrato criado com id gerado")
-    @ApiResponse(responseCode = "400", description = "Dados inválidos. Confira os campos obrigatórios")
+    @ApiResponse(responseCode = "201", description = "Contrato criado com id gerado",
+            headers = @Header(name = "Location", description = "URI do recurso criado", schema = @Schema(type = "string", format = "uri")))
+    @ApiResponse(responseCode = "400", description = "Identificador ou corpo da requisição inválido",
+            content = @Content(mediaType = "application/json", schema = @Schema(type = "object")))
     @PutMapping("/contracts/{id}")
     public ResponseEntity<EntityModel<Contract>> updateOrCreateContract(@Parameter(description = "Id do contrato") @PathVariable Long id, @RequestBody @Valid Contract newContract) {
         return repository.findById(id)
@@ -115,10 +125,12 @@ public class ContractController {
     }
 
     @Operation(summary = "Excluir contrato", description = "Exclui o contrato com o id informado. A resposta não possui conteúdo no corpo.")
-    @ApiResponse(responseCode = "204", description = "Contrato excluído com sucesso")
-    @ApiResponse(responseCode = "404", description = "Contrato não encontrado")
+    @ApiResponse(responseCode = "204", description = "Contrato excluído com sucesso", content = @Content)
+    @ApiResponse(responseCode = "400", description = "Identificador inválido",
+            content = @Content(mediaType = "application/json", schema = @Schema(type = "object")))
+    @ApiResponse(responseCode = "404", description = "Contrato não encontrado", content = @Content)
     @DeleteMapping("/contracts/{id}")
-    public ResponseEntity<?> deleteContract(@Parameter(description = "Id do contrato") @PathVariable Long id) {
+    public ResponseEntity<Void> deleteContract(@Parameter(description = "Id do contrato") @PathVariable Long id) {
         var contract = repository.findById(id);
         if (contract.isEmpty())
             return ResponseEntity.notFound().build();

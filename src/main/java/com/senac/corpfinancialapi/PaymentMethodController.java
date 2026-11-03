@@ -2,6 +2,7 @@ package com.senac.corpfinancialapi;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -41,6 +42,8 @@ public class PaymentMethodController {
 
     @Operation(summary = "Listar meios de pagamento", description = "Retorna lista paginada de meios de pagamento com links de navegação. Use page, size e sort para navegar.")
     @ApiResponse(responseCode = "200", description = "Lista retornada com sucesso")
+    @ApiResponse(responseCode = "400", description = "Campo de ordenação inválido",
+            content = @Content(mediaType = "application/json", schema = @Schema(type = "object")))
     @GetMapping("/payment-methods")
     public ResponseEntity<PagedModel<EntityModel<PaymentMethod>>> getAllPaymentMethods(
             @ParameterObject @PageableDefault(size = 10, page = 0, sort = "id") Pageable pageable) {
@@ -50,8 +53,10 @@ public class PaymentMethodController {
     }
 
     @Operation(summary = "Criar meio de pagamento", description = "Cria um meio de pagamento vinculado a uma empresa. Envie companyId com o id de uma empresa existente, type, provider, label, details, isDefault e active. O campo label é o apelido interno da conta. O campo details guarda apenas referência operacional, sem dados sensíveis completos.")
-    @ApiResponse(responseCode = "201", description = "Meio de pagamento criado com sucesso")
-    @ApiResponse(responseCode = "400", description = "Dados inválidos. Confira os campos obrigatórios")
+    @ApiResponse(responseCode = "201", description = "Meio de pagamento criado com sucesso",
+            headers = @Header(name = "Location", description = "URI do recurso criado", schema = @Schema(type = "string", format = "uri")))
+    @ApiResponse(responseCode = "400", description = "Corpo da requisição inválido",
+            content = @Content(mediaType = "application/json", schema = @Schema(type = "object")))
     @io.swagger.v3.oas.annotations.parameters.RequestBody(required = true)
     @PostMapping("/payment-methods")
     public ResponseEntity<EntityModel<PaymentMethod>> newPaymentMethod(
@@ -72,7 +77,10 @@ public class PaymentMethodController {
 
     @Operation(summary = "Buscar meio de pagamento por id", description = "Retorna um meio de pagamento com links de navegação. Use o id retornado na listagem ou na criação.")
     @ApiResponse(responseCode = "200", description = "Meio de pagamento encontrado")
-    @ApiResponse(responseCode = "404", description = "Meio de pagamento não encontrado")
+    @ApiResponse(responseCode = "400", description = "Identificador inválido",
+            content = @Content(mediaType = "application/json", schema = @Schema(type = "object")))
+    @ApiResponse(responseCode = "404", description = "Meio de pagamento não encontrado",
+            content = @Content(mediaType = "text/plain", schema = @Schema(type = "string")))
     @GetMapping("/payment-methods/{id}")
     public EntityModel<PaymentMethod> getPaymentMethodById(@Parameter(description = "Id do meio de pagamento") @PathVariable Long id) {
         PaymentMethod paymentMethod = repository.findById(id).orElseThrow(() -> new PaymentMethodNotFoundException(id));
@@ -81,8 +89,10 @@ public class PaymentMethodController {
 
     @Operation(summary = "Atualizar ou criar meio de pagamento", description = "Atualiza todos os campos do meio de pagamento com o id informado. Se o id não existir, cria um registro novo com id gerado pelo servidor.")
     @ApiResponse(responseCode = "200", description = "Meio de pagamento atualizado com sucesso")
-    @ApiResponse(responseCode = "201", description = "Meio de pagamento criado com id gerado")
-    @ApiResponse(responseCode = "400", description = "Dados inválidos. Confira os campos obrigatórios")
+    @ApiResponse(responseCode = "201", description = "Meio de pagamento criado com id gerado",
+            headers = @Header(name = "Location", description = "URI do recurso criado", schema = @Schema(type = "string", format = "uri")))
+    @ApiResponse(responseCode = "400", description = "Identificador ou corpo da requisição inválido",
+            content = @Content(mediaType = "application/json", schema = @Schema(type = "object")))
     @PutMapping("/payment-methods/{id}")
     public ResponseEntity<EntityModel<PaymentMethod>> updateOrCreatePaymentMethod(@Parameter(description = "Id do meio de pagamento") @PathVariable Long id, @RequestBody @Valid PaymentMethod newPaymentMethod) {
         return repository.findById(id)
@@ -105,10 +115,12 @@ public class PaymentMethodController {
     }
 
     @Operation(summary = "Excluir meio de pagamento", description = "Exclui o meio de pagamento com o id informado. A resposta não possui conteúdo no corpo.")
-    @ApiResponse(responseCode = "204", description = "Meio de pagamento excluído com sucesso")
-    @ApiResponse(responseCode = "404", description = "Meio de pagamento não encontrado")
+    @ApiResponse(responseCode = "204", description = "Meio de pagamento excluído com sucesso", content = @Content)
+    @ApiResponse(responseCode = "400", description = "Identificador inválido",
+            content = @Content(mediaType = "application/json", schema = @Schema(type = "object")))
+    @ApiResponse(responseCode = "404", description = "Meio de pagamento não encontrado", content = @Content)
     @DeleteMapping("/payment-methods/{id}")
-    public ResponseEntity<?> deletePaymentMethod(@Parameter(description = "Id do meio de pagamento") @PathVariable Long id) {
+    public ResponseEntity<Void> deletePaymentMethod(@Parameter(description = "Id do meio de pagamento") @PathVariable Long id) {
         var paymentMethod = repository.findById(id);
         if (paymentMethod.isEmpty())
             return ResponseEntity.notFound().build();

@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -43,6 +44,8 @@ public class CompanyController {
 
     @Operation(summary = "Listar empresas", description = "Retorna lista paginada de empresas com links de navegação. Use os parâmetros page, size e sort para navegar. Exemplo: /companies?page=0&size=10&sort=id,asc")
     @ApiResponse(responseCode = "200", description = "Lista retornada com sucesso")
+    @ApiResponse(responseCode = "400", description = "Campo de ordenação inválido",
+            content = @Content(mediaType = "application/json", schema = @Schema(type = "object")))
     @GetMapping("/companies")
     public ResponseEntity<PagedModel<EntityModel<Company>>> getAllCompanies(
             @ParameterObject @PageableDefault(size = 10, page = 0, sort = "id") Pageable pageable) {
@@ -52,8 +55,10 @@ public class CompanyController {
     }
 
     @Operation(summary = "Criar empresa", description = "Cria uma empresa. Envie tradeName, legalName, docNumber, sector, email, phone e active. Os campos createdAt e updatedAt são preenchidos pelo servidor quando ausentes. O campo docNumber identifica o documento da empresa e deve ser único por empresa.")
-    @ApiResponse(responseCode = "201", description = "Empresa criada com sucesso")
-    @ApiResponse(responseCode = "400", description = "Dados inválidos. Confira os campos obrigatórios")
+    @ApiResponse(responseCode = "201", description = "Empresa criada com sucesso",
+            headers = @Header(name = "Location", description = "URI do recurso criado", schema = @Schema(type = "string", format = "uri")))
+    @ApiResponse(responseCode = "400", description = "Corpo da requisição inválido",
+            content = @Content(mediaType = "application/json", schema = @Schema(type = "object")))
     @io.swagger.v3.oas.annotations.parameters.RequestBody(required = true)
     @PostMapping("/companies")
     public ResponseEntity<EntityModel<Company>> newCompany(
@@ -76,7 +81,10 @@ public class CompanyController {
 
     @Operation(summary = "Buscar empresa por id", description = "Retorna uma empresa com links de navegação. Use o id retornado na listagem ou na criação.")
     @ApiResponse(responseCode = "200", description = "Empresa encontrada")
-    @ApiResponse(responseCode = "404", description = "Empresa não encontrada")
+    @ApiResponse(responseCode = "400", description = "Identificador inválido",
+            content = @Content(mediaType = "application/json", schema = @Schema(type = "object")))
+    @ApiResponse(responseCode = "404", description = "Empresa não encontrada",
+            content = @Content(mediaType = "text/plain", schema = @Schema(type = "string")))
     @GetMapping("/companies/{id}")
     public EntityModel<Company> getCompanyById(@Parameter(description = "Id da empresa") @PathVariable Long id) {
         Company company = repository.findById(id).orElseThrow(() -> new CompanyNotFoundException(id));
@@ -85,8 +93,10 @@ public class CompanyController {
 
     @Operation(summary = "Atualizar ou criar empresa", description = "Atualiza todos os campos da empresa com o id informado. Se o id não existir, cria uma empresa nova com id gerado pelo servidor. O campo createdAt original é mantido e o campo updatedAt é atualizado pelo servidor.")
     @ApiResponse(responseCode = "200", description = "Empresa atualizada com sucesso")
-    @ApiResponse(responseCode = "201", description = "Empresa criada com id gerado")
-    @ApiResponse(responseCode = "400", description = "Dados inválidos. Confira os campos obrigatórios")
+    @ApiResponse(responseCode = "201", description = "Empresa criada com id gerado",
+            headers = @Header(name = "Location", description = "URI do recurso criado", schema = @Schema(type = "string", format = "uri")))
+    @ApiResponse(responseCode = "400", description = "Identificador ou corpo da requisição inválido",
+            content = @Content(mediaType = "application/json", schema = @Schema(type = "object")))
     @PutMapping("/companies/{id}")
     public ResponseEntity<EntityModel<Company>> updateOrCreateCompany(@Parameter(description = "Id da empresa") @PathVariable Long id, @RequestBody @Valid Company newCompany) {
         return repository.findById(id)
@@ -114,10 +124,12 @@ public class CompanyController {
     }
 
     @Operation(summary = "Excluir empresa", description = "Exclui a empresa com o id informado. A resposta não possui conteúdo no corpo.")
-    @ApiResponse(responseCode = "204", description = "Empresa excluída com sucesso")
-    @ApiResponse(responseCode = "404", description = "Empresa não encontrada")
+    @ApiResponse(responseCode = "204", description = "Empresa excluída com sucesso", content = @Content)
+    @ApiResponse(responseCode = "400", description = "Identificador inválido",
+            content = @Content(mediaType = "application/json", schema = @Schema(type = "object")))
+    @ApiResponse(responseCode = "404", description = "Empresa não encontrada", content = @Content)
     @DeleteMapping("/companies/{id}")
-    public ResponseEntity<?> deleteCompany(@Parameter(description = "Id da empresa") @PathVariable Long id) {
+    public ResponseEntity<Void> deleteCompany(@Parameter(description = "Id da empresa") @PathVariable Long id) {
         var company = repository.findById(id);
         if (company.isEmpty())
             return ResponseEntity.notFound().build();

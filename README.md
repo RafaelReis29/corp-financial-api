@@ -31,7 +31,15 @@ Para consultas paginadas, use página, tamanho e ordenação, por exemplo com pa
 
 ## Respostas
 
-Os códigos usados são 200 para consulta e atualização com sucesso, 201 para criação com sucesso com Location no cabeçalho, 204 para exclusão com sucesso sem corpo, 400 para corpo inválido ou campo obrigatório ausente, 404 para identificador inexistente.
+A versão atual da API é **1.0.1**.
+
+| Status | Quando é retornado |
+| --- | --- |
+| `200 OK` | Consulta ou atualização bem-sucedida. Listagens retornam `200` mesmo quando a página está vazia. |
+| `201 Created` | Criação bem-sucedida. O cabeçalho `Location` aponta para o recurso criado. |
+| `204 No Content` | Exclusão bem-sucedida, com corpo vazio. |
+| `400 Bad Request` | Corpo inválido, identificador em formato inválido ou ordenação por campo inexistente. |
+| `404 Not Found` | Consulta ou exclusão por identificador numérico que não corresponde a um registro. Na exclusão, a resposta tem corpo vazio. |
 
 ## Carga inicial
 
