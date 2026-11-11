@@ -10,7 +10,7 @@
     </parent>
     <groupId>com.senac</groupId>
     <artifactId>corp-financial-api</artifactId>
-    <version>1.0.1</version>
+    <version>2.0.0</version>
     <name>corp-financial-api</name>
     <description>corp-financial-api</description>
     <url/>
@@ -71,6 +71,11 @@
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
             <version>3.1.1</version>
+        </dependency>
+        <dependency>
+            <groupId>com.bucket4j</groupId>
+            <artifactId>bucket4j_jdk17-core</artifactId>
+            <version>8.17.0</version>
         </dependency>
     </dependencies>
 

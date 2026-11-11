@@ -1,8 +1,19 @@
 package com.senac.corpfinancialapi;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.validation.constraints.AssertTrue;
+import jakarta.validation.constraints.Digits;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
@@ -12,24 +23,51 @@ import java.util.Objects;
 
 @Entity
 public class Invoice {
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private @Id
     @GeneratedValue long id;
 
+    @NotNull
+    @Positive
+    @Column(name = "contract_id")
     private Long contractId;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "contract_id", insertable = false, updatable = false)
+    private Contract contract;
+
     @Size(min = 3, max = 500)
+    @Column(length = 500)
     private String description;
 
+    @NotNull
+    @Positive
+    @Digits(integer = 17, fraction = 2)
+    @Column(precision = 19, scale = 2)
     private BigDecimal amount;
 
+    @NotNull
     private LocalDate dueDate;
 
     private LocalDateTime paidAt;
 
-    @Size(min = 3, max = 30)
+    @NotNull
+    @Pattern(regexp = "PENDENTE|PAGO|VENCIDO|ATRASADO|CANCELADO")
     private String status;
 
+    @Positive
+    @Column(name = "payment_method_id")
     private Long paymentMethodId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "payment_method_id", insertable = false, updatable = false)
+    private PaymentMethod paymentMethod;
+
+    @JsonIgnore
+    @AssertTrue(message = "paidAt is required for PAGO and must be absent for other statuses")
+    public boolean isPaymentStatusValid() {
+        return status == null || "PAGO".equals(status) == (paidAt != null);
+    }
 
     public Invoice() {
     }

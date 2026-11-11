@@ -19,20 +19,8 @@ import org.springframework.core.io.Resource;
 import org.springframework.web.servlet.resource.ResourceTransformerChain;
 import org.springframework.web.servlet.resource.TransformedResource;
 
-/**
- * Injeta o tema visual próprio (verde menta sobre roxo escuro) no
- * Swagger UI, via transformer da página index.
- *
- * <p>O bean abaixo substitui o transformer padrão do springdoc
- * (o bean original é {@code @ConditionalOnMissingBean}), mantendo a
- * transformação original do {@code swagger-initializer.js} e
- * adicionando apenas um {@code <link>} para
- * {@code /static/swagger-theme.css} no {@code index.html}.</p>
- */
 @Configuration
 public class SwaggerTheme {
-
-    private static final String THEME_LINK = "<link rel=\"stylesheet\" type=\"text/css\" href=\"/static/swagger-theme.css?v=7\">";
 
     @Bean
     SwaggerIndexTransformer themedSwaggerIndexTransformer(
@@ -57,17 +45,27 @@ public class SwaggerTheme {
                 ResourceTransformerChain transformerChain) throws IOException {
             Resource transformed = super.transform(request, resource, transformerChain);
             String url = resource.getURL().toString();
-            boolean isSwaggerIndex = url.contains("swagger-ui") && url.endsWith("/index.html");
-            if (isSwaggerIndex) {
-                try (InputStream inputStream = transformed.getInputStream()) {
-                    String html = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
-                    if (!html.contains("swagger-theme.css") && html.contains("</head>")) {
-                        html = html.replace("</head>", "  " + THEME_LINK + "\n</head>");
-                        return new TransformedResource(transformed, html.getBytes(StandardCharsets.UTF_8));
-                    }
-                }
+            if (url.contains("swagger-ui") && url.endsWith("/index.html")) {
+                String assetsPath = request.getContextPath() + "/static/";
+                String assets = """
+                          <link rel="stylesheet" href="%sswagger-theme.css?v=8">
+                          <script src="%sswagger-idempotency.js?v=2"></script>
+                        </head>""".formatted(assetsPath, assetsPath);
+                return replace(transformed, "</head>", assets);
+            }
+            if (url.contains("swagger-ui") && url.endsWith("/swagger-initializer.js")) {
+                Resource initializer = replace(transformed, "SwaggerUIBundle.plugins.DownloadUrl",
+                        "SwaggerUIBundle.plugins.DownloadUrl,\n      window.corpIdempotencyPlugin");
+                return replace(initializer, "plugins: [", "requestInterceptor: window.corpSwaggerRequestInterceptor,\n    plugins: [");
             }
             return transformed;
+        }
+
+        private Resource replace(Resource resource, String original, String replacement) throws IOException {
+            try (InputStream inputStream = resource.getInputStream()) {
+                String content = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+                return new TransformedResource(resource, content.replace(original, replacement).getBytes(StandardCharsets.UTF_8));
+            }
         }
     }
 }

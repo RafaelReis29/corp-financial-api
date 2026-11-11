@@ -1,9 +1,20 @@
 package com.senac.corpfinancialapi;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.validation.constraints.AssertTrue;
+import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
@@ -13,33 +24,55 @@ import java.util.Objects;
 
 @Entity
 public class Contract {
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private @Id
     @GeneratedValue long id;
 
+    @NotNull
+    @Positive
+    @Column(name = "company_id")
     private Long companyId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "company_id", insertable = false, updatable = false)
+    private Company company;
 
     @NotBlank
     @Size(min = 3, max = 150)
     private String title;
 
     @Size(min = 3, max = 1000)
+    @Column(length = 1000)
     private String description;
 
+    @NotNull
+    @Positive
+    @Digits(integer = 17, fraction = 2)
+    @Column(precision = 19, scale = 2)
     private BigDecimal totalValue;
 
-    @Size(min = 3, max = 10)
+    @NotNull
+    @Pattern(regexp = "[A-Z]{3}")
     private String currency;
 
+    @NotNull
     private LocalDate startDate;
 
     private LocalDate endDate;
 
-    @Size(min = 3, max = 30)
+    @NotNull
+    @Pattern(regexp = "ATIVO|RASCUNHO|SUSPENSO|ENCERRADO|CANCELADO")
     private String status;
 
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;
+
+    @JsonIgnore
+    @AssertTrue(message = "endDate must be on or after startDate")
+    public boolean isDateRangeValid() {
+        return startDate == null || endDate == null || !endDate.isBefore(startDate);
+    }
 
     public Contract() {
     }

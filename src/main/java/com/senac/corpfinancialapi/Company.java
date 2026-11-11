@@ -1,8 +1,17 @@
 package com.senac.corpfinancialapi;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
@@ -10,7 +19,9 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 
 @Entity
+@Table(uniqueConstraints = @UniqueConstraint(columnNames = {"account_id", "doc_number"}))
 public class Company {
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private @Id
     @GeneratedValue long id;
 
@@ -23,11 +34,13 @@ public class Company {
 
     @NotBlank
     @Size(min = 3, max = 30)
+    @Column(name = "doc_number", length = 30)
     private String docNumber;
 
     @Size(min = 3, max = 100)
     private String sector;
 
+    @Email
     @Size(min = 3, max = 150)
     private String email;
 
@@ -43,7 +56,8 @@ public class Company {
     public Company() {
     }
 
-    public Company(String tradeName, String legalName, String docNumber, String sector, String email, String phone, Boolean active, LocalDateTime createdAt, LocalDateTime updatedAt) {
+    public Company(Account account, String tradeName, String legalName, String docNumber, String sector, String email, String phone, Boolean active, LocalDateTime createdAt, LocalDateTime updatedAt) {
+        this.account = account;
         this.tradeName = tradeName;
         this.legalName = legalName;
         this.docNumber = docNumber;
@@ -53,6 +67,15 @@ public class Company {
         this.active = active;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
+    }
+
+    @JsonIgnore
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "account_id", nullable = false, updatable = false)
+    private Account account;
+
+    void assignTo(Account account) {
+        this.account = account;
     }
 
     public long getId() {

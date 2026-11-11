@@ -4,13 +4,13 @@ import java.time.LocalDateTime;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -26,39 +26,42 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
+@RequestMapping(version = "1+")
 @Tag(name = "contracts", description = "Gestão de contratos entre empresas. Cada contrato pertence a uma empresa pelo campo companyId. O campo status indica a fase do contrato. Valores usados: ATIVO, RASCUNHO, SUSPENSO, ENCERRADO e CANCELADO.")
 public class ContractController {
 
     private final ContractRepository repository;
+    private final IdempotentPosts posts;
+    private final AccountScope scope;
     private final ContractModelAssembler assembler;
     private final PagedResourcesAssembler<Contract> pagedResourcesAssembler;
 
-    public ContractController(ContractRepository repository, ContractModelAssembler assembler, PagedResourcesAssembler<Contract> pagedResourcesAssembler) {
+    public ContractController(ContractRepository repository, ContractModelAssembler assembler, PagedResourcesAssembler<Contract> pagedResourcesAssembler, IdempotentPosts posts, AccountScope scope) {
         this.repository = repository;
+        this.posts = posts;
+        this.scope = scope;
         this.assembler = assembler;
         this.pagedResourcesAssembler = pagedResourcesAssembler;
     }
 
     @Operation(summary = "Listar contratos", description = "Retorna lista paginada de contratos com links de navegação. Use page, size e sort para navegar.")
     @ApiResponse(responseCode = "200", description = "Lista retornada com sucesso")
-    @ApiResponse(responseCode = "400", description = "Campo de ordenação inválido",
-            content = @Content(mediaType = "application/json", schema = @Schema(type = "object")))
+    @ApiResponse(responseCode = "400", description = "Paginação ou campo de ordenação inválido")
     @GetMapping("/contracts")
     public ResponseEntity<PagedModel<EntityModel<Contract>>> getAllContracts(
             @ParameterObject @PageableDefault(size = 10, page = 0, sort = "id") Pageable pageable) {
-        Page<Contract> contractPage = repository.findAll(pageable);
+        Page<Contract> contractPage = repository.findAllByCompany_Account_Id(scope.accountId(), pageable);
         PagedModel<EntityModel<Contract>> pagedModel = pagedResourcesAssembler.toModel(contractPage, assembler);
         return ResponseEntity.ok(pagedModel);
     }
 
-    @Operation(summary = "Criar contrato", description = "Cria um contrato vinculado a uma empresa. Envie companyId com o id de uma empresa existente, title, description, totalValue, currency, startDate, endDate e status. Use currency com o código da moeda, por exemplo BRL. Os campos createdAt e updatedAt são preenchidos pelo servidor quando ausentes.")
-    @ApiResponse(responseCode = "201", description = "Contrato criado com sucesso",
-            headers = @Header(name = "Location", description = "URI do recurso criado", schema = @Schema(type = "string", format = "uri")))
-    @ApiResponse(responseCode = "400", description = "Corpo da requisição inválido",
-            content = @Content(mediaType = "application/json", schema = @Schema(type = "object")))
+    @Operation(summary = "Criar contrato", description = "Cria um contrato vinculado a uma empresa. Envie companyId com o id de uma empresa associada à sua conta, title, description, totalValue, currency, startDate, endDate e status. Use currency com o código da moeda, por exemplo BRL. Os campos createdAt e updatedAt são preenchidos pelo servidor quando ausentes.")
+    @ApiResponse(responseCode = "201", description = "Contrato criado com sucesso")
+    @ApiResponse(responseCode = "400", description = "Corpo da requisição inválido")
     @io.swagger.v3.oas.annotations.parameters.RequestBody(required = true)
     @PostMapping("/contracts")
     public ResponseEntity<EntityModel<Contract>> newContract(
@@ -70,6 +73,11 @@ public class ContractController {
                             examples = @ExampleObject(value = "{ \"companyId\": 1, \"title\": \"Fornecimento 2026\", \"description\": \"Fornecimento anual\", \"totalValue\": 150000.00, \"currency\": \"BRL\", \"startDate\": \"2026-01-01\", \"endDate\": \"2026-12-31\", \"status\": \"ATIVO\" }"))
             )
             @RequestBody @Valid Contract newContract) {
+        return posts.execute(newContract, () -> createContract(newContract));
+    }
+
+    private ResponseEntity<EntityModel<Contract>> createContract(Contract newContract) {
+        scope.requireCompany(newContract.getCompanyId());
         if (newContract.getCreatedAt() == null) {
             newContract.setCreatedAt(LocalDateTime.now());
         }
@@ -81,60 +89,48 @@ public class ContractController {
 
     @Operation(summary = "Buscar contrato por id", description = "Retorna um contrato com links de navegação. Use o id retornado na listagem ou na criação.")
     @ApiResponse(responseCode = "200", description = "Contrato encontrado")
-    @ApiResponse(responseCode = "400", description = "Identificador inválido",
-            content = @Content(mediaType = "application/json", schema = @Schema(type = "object")))
-    @ApiResponse(responseCode = "404", description = "Contrato não encontrado",
-            content = @Content(mediaType = "text/plain", schema = @Schema(type = "string")))
+    @ApiResponse(responseCode = "400", description = "Identificador inválido")
+    @ApiResponse(responseCode = "404", description = "Contrato não encontrado")
     @GetMapping("/contracts/{id}")
-    public EntityModel<Contract> getContractById(@Parameter(description = "Id do contrato") @PathVariable Long id) {
-        Contract contract = repository.findById(id).orElseThrow(() -> new ContractNotFoundException(id));
+    public EntityModel<Contract> getContractById(@Parameter(description = "Id do contrato") @PathVariable @Positive Long id) {
+        Contract contract = repository.findByIdAndCompany_Account_Id(id, scope.accountId()).orElseThrow(() -> new ContractNotFoundException(id));
         return assembler.toModel(contract);
     }
 
-    @Operation(summary = "Atualizar ou criar contrato", description = "Atualiza todos os campos do contrato com o id informado. Se o id não existir, cria um contrato novo com id gerado pelo servidor. O campo createdAt original é mantido e o campo updatedAt é atualizado pelo servidor.")
+    @Operation(summary = "Atualizar ou criar contrato", description = "Atualiza o registro com o id informado. Se o ID não estiver associado à conta, cria um registro para essa conta com ID gerado pelo servidor. O campo createdAt original é mantido e o campo updatedAt é atualizado pelo servidor.")
     @ApiResponse(responseCode = "200", description = "Contrato atualizado com sucesso")
-    @ApiResponse(responseCode = "201", description = "Contrato criado com id gerado",
-            headers = @Header(name = "Location", description = "URI do recurso criado", schema = @Schema(type = "string", format = "uri")))
-    @ApiResponse(responseCode = "400", description = "Identificador ou corpo da requisição inválido",
-            content = @Content(mediaType = "application/json", schema = @Schema(type = "object")))
+    @ApiResponse(responseCode = "400", description = "Identificador ou corpo da requisição inválido")
+    @ApiResponse(responseCode = "201", description = "Registro criado com id gerado pelo servidor")
     @PutMapping("/contracts/{id}")
-    public ResponseEntity<EntityModel<Contract>> updateOrCreateContract(@Parameter(description = "Id do contrato") @PathVariable Long id, @RequestBody @Valid Contract newContract) {
-        return repository.findById(id)
-                .map(contract -> {
-                    contract.setCompanyId(newContract.getCompanyId());
-                    contract.setTitle(newContract.getTitle());
-                    contract.setDescription(newContract.getDescription());
-                    contract.setTotalValue(newContract.getTotalValue());
-                    contract.setCurrency(newContract.getCurrency());
-                    contract.setStartDate(newContract.getStartDate());
-                    contract.setEndDate(newContract.getEndDate());
-                    contract.setStatus(newContract.getStatus());
-                    contract.setUpdatedAt(LocalDateTime.now());
-                    Contract saved = repository.save(contract);
-                    return ResponseEntity.ok(assembler.toModel(saved));
-                })
-                .orElseGet(() -> {
-                    if (newContract.getCreatedAt() == null) {
-                        newContract.setCreatedAt(LocalDateTime.now());
-                    }
-                    newContract.setUpdatedAt(LocalDateTime.now());
-                    Contract saved = repository.save(newContract);
-                    EntityModel<Contract> entityModel = assembler.toModel(saved);
-                    return ResponseEntity.created(entityModel.getRequiredLink(IanaLinkRelations.SELF).toUri()).body(entityModel);
-                });
+    public ResponseEntity<EntityModel<Contract>> updateContract(@Parameter(description = "Id do contrato") @PathVariable @Positive Long id, @RequestBody @Valid Contract newContract) {
+        Contract contract = repository.findByIdAndCompany_Account_Id(id, scope.accountId()).orElse(null);
+        if (contract == null) {
+            return createContract(newContract);
+        }
+        scope.requireCompany(newContract.getCompanyId());
+        contract.setCompanyId(newContract.getCompanyId());
+        contract.setTitle(newContract.getTitle());
+        contract.setDescription(newContract.getDescription());
+        contract.setTotalValue(newContract.getTotalValue());
+        contract.setCurrency(newContract.getCurrency());
+        contract.setStartDate(newContract.getStartDate());
+        contract.setEndDate(newContract.getEndDate());
+        contract.setStatus(newContract.getStatus());
+        contract.setUpdatedAt(LocalDateTime.now());
+        Contract saved = repository.save(contract);
+        return ResponseEntity.ok(assembler.toModel(saved));
     }
 
     @Operation(summary = "Excluir contrato", description = "Exclui o contrato com o id informado. A resposta não possui conteúdo no corpo.")
     @ApiResponse(responseCode = "204", description = "Contrato excluído com sucesso", content = @Content)
-    @ApiResponse(responseCode = "400", description = "Identificador inválido",
-            content = @Content(mediaType = "application/json", schema = @Schema(type = "object")))
+    @ApiResponse(responseCode = "400", description = "Identificador inválido")
     @ApiResponse(responseCode = "404", description = "Contrato não encontrado", content = @Content)
     @DeleteMapping("/contracts/{id}")
-    public ResponseEntity<Void> deleteContract(@Parameter(description = "Id do contrato") @PathVariable Long id) {
-        var contract = repository.findById(id);
+    public ResponseEntity<Void> deleteContract(@Parameter(description = "Id do contrato") @PathVariable @Positive Long id) {
+        var contract = repository.findByIdAndCompany_Account_Id(id, scope.accountId());
         if (contract.isEmpty())
             return ResponseEntity.notFound().build();
-        repository.deleteById(id);
+        repository.delete(contract.get());
         return ResponseEntity.noContent().build();
     }
 }

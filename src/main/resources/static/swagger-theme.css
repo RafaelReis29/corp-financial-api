@@ -1,15 +1,4 @@
-/* ============================================================
- * Corp Financial API — tema escuro Swagger UI (v2)
- * Paleta: verde menta sobre roxo escuro (fundo #211e3c).
- * Servido em /static/swagger-theme.css e injetado no index
- * do Swagger via SwaggerTheme (transformer).
- *
- * Nota: o Swagger UI 5.32 tem dark mode nativo via classe
- * `.dark-mode` (ex.: `.dark-mode .swagger-ui .topbar`, com
- * especificidade maior que `.swagger-ui .topbar`). Por isso as
- * declarações de cor/fundo/borda deste tema usam `!important`
- * e repetem o prefixo `.dark-mode` onde necessário.
- * ============================================================ */
+/* Tema único do Swagger UI. Verde menta sobre roxo escuro. */
 
 :root {
   --brand-mint: #7df0a6;
@@ -39,8 +28,8 @@
 }
 
 /* ================= base ================= */
-html,
-html.dark-mode {
+html {
+  color-scheme: dark;
   background: var(--bg-deep) !important;
 }
 
@@ -53,8 +42,7 @@ body {
   margin: 0;
 }
 
-.swagger-ui,
-.dark-mode .swagger-ui {
+.swagger-ui {
   background: transparent !important;
   color: var(--text) !important;
   font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif !important;
@@ -63,87 +51,63 @@ body {
   padding-bottom: 48px;
 }
 
-.swagger-ui a,
-.dark-mode .swagger-ui a {
+.swagger-ui a {
   color: var(--accent) !important;
   text-decoration: none;
 }
 
-.swagger-ui a:hover,
-.dark-mode .swagger-ui a:hover {
+.swagger-ui a:hover {
   text-decoration: underline;
 }
 
 /* ================= topbar ================= */
-.swagger-ui .topbar,
-.dark-mode .swagger-ui .topbar {
+.swagger-ui .topbar {
   background: linear-gradient(180deg, #8df5ae 0%, #7df0a6 100%) !important;
   border-bottom: 1px solid rgba(33, 30, 60, 0.3) !important;
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35) !important;
   padding: 10px 0 !important;
 }
 
-.swagger-ui .topbar .topbar-wrapper,
-.dark-mode .swagger-ui .topbar .topbar-wrapper {
+.swagger-ui .topbar .topbar-wrapper {
   align-items: center !important;
   gap: 12px !important;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
 }
 
-.swagger-ui .topbar .link,
-.swagger-ui .topbar .topbar-wrapper > a {
-  display: none !important;
+.swagger-ui .corp-swagger-brand,
+.swagger-ui .corp-swagger-version {
+  align-items: center;
+  color: var(--brand-ink);
+  display: flex;
+  gap: 10px;
+  font-weight: 700;
 }
 
-.swagger-ui .topbar .topbar-wrapper::before {
-  color: var(--brand-ink) !important;
-  content: "Corp Financial API";
-  font-size: 22px !important;
-  font-weight: 800 !important;
-  letter-spacing: 0.2px;
-  margin-right: auto;
-  white-space: nowrap;
+.swagger-ui .corp-swagger-brand {
+  font-size: 22px;
+  font-weight: 800;
 }
 
-/* campo de URL + botões da topbar: texto escuro sobre menta */
-.swagger-ui .topbar .download-url-wrapper input[type="text"],
-.dark-mode .swagger-ui .topbar .download-url-wrapper input[type="text"] {
-  background: rgba(28, 25, 51, 0.1) !important;
-  border: 1px solid rgba(28, 25, 51, 0.4) !important;
-  border-radius: 999px !important;
-  color: var(--brand-ink) !important;
-  font-size: 13px !important;
-  font-weight: 600 !important;
-  max-width: 320px;
+.swagger-ui .corp-swagger-brand img {
+  display: block;
+  object-fit: contain;
 }
 
-.swagger-ui .topbar .download-url-button,
-.swagger-ui .topbar .btn.authorize,
-.dark-mode .swagger-ui .topbar .download-url-button,
-.dark-mode .swagger-ui .topbar .btn.authorize {
+.swagger-ui .corp-swagger-version select,
+.swagger-ui select[aria-label="X-API-Version"] {
+  appearance: auto;
+}
+
+.swagger-ui .topbar .corp-swagger-version select {
   background: var(--brand-ink) !important;
-  border: 1px solid var(--brand-ink) !important;
-  border-radius: 999px !important;
-  color: var(--brand-mint) !important;
-  font-size: 13px !important;
-  font-weight: 700 !important;
-}
-
-.swagger-ui .topbar .btn.authorize svg,
-.dark-mode .swagger-ui .topbar .btn.authorize svg {
-  fill: var(--brand-mint) !important;
-}
-
-.swagger-ui .dark-mode-toggle button,
-.dark-mode .swagger-ui .dark-mode-toggle button {
-  background: var(--brand-ink) !important;
-  border: 1px solid var(--brand-ink) !important;
-  border-radius: 999px !important;
-  color: var(--brand-mint) !important;
+  color: var(--text) !important;
+  border-color: var(--brand-ink) !important;
 }
 
 /* ================= info / descrição ================= */
-.swagger-ui .info,
-.dark-mode .swagger-ui .info {
+.swagger-ui .info {
   background: var(--bg-card) !important;
   border: 1px solid var(--line) !important;
   border-radius: var(--radius) !important;
@@ -153,8 +117,7 @@ body {
 }
 
 .swagger-ui .info hgroup.main h1.title,
-.swagger-ui .info .title,
-.dark-mode .swagger-ui .info .title {
+.swagger-ui .info .title {
   color: var(--text) !important;
   font-size: 32px !important;
   font-weight: 800 !important;
@@ -163,8 +126,7 @@ body {
 }
 
 .swagger-ui .info .title small,
-.swagger-ui .info .title small pre.version,
-.dark-mode .swagger-ui .info .title small pre.version {
+.swagger-ui .info .title small pre.version {
   background: rgba(125, 240, 166, 0.16) !important;
   border: 1px solid var(--line) !important;
   border-radius: 8px !important;
@@ -176,9 +138,7 @@ body {
 
 .swagger-ui .info .description,
 .swagger-ui .info .description p,
-.swagger-ui .info li,
-.dark-mode .swagger-ui .info .description,
-.dark-mode .swagger-ui .info li {
+.swagger-ui .info li {
   color: var(--text-muted) !important;
   font-size: 15px !important;
   font-weight: 400 !important;
@@ -187,8 +147,7 @@ body {
 
 .swagger-ui .info .base-url,
 .swagger-ui .info .contact,
-.swagger-ui .info .license,
-.dark-mode .swagger-ui .info .contact {
+.swagger-ui .info .license {
   color: var(--text-muted) !important;
   font-size: 14px !important;
 }
@@ -200,8 +159,7 @@ body {
 }
 
 /* ================= servers / filter ================= */
-.swagger-ui .scheme-container,
-.dark-mode .swagger-ui .scheme-container {
+.swagger-ui .scheme-container {
   background: var(--bg-card-2) !important;
   border: 1px solid var(--line) !important;
   border-radius: var(--radius) !important;
@@ -214,16 +172,14 @@ body {
 }
 
 .swagger-ui .scheme-container .schemes > label,
-.swagger-ui .servers > label,
-.dark-mode .swagger-ui .servers > label {
+.swagger-ui .servers > label {
   color: var(--text-muted) !important;
   font-size: 13px !important;
   font-weight: 600 !important;
 }
 
 .swagger-ui .scheme-container select,
-.swagger-ui .servers select,
-.dark-mode .swagger-ui .servers select {
+.swagger-ui .servers select {
   background: var(--bg-input) !important;
   border: 1px solid var(--line) !important;
   border-radius: 10px !important;
@@ -232,8 +188,7 @@ body {
   font-weight: 600 !important;
 }
 
-.swagger-ui .filter .operation-filter-input,
-.dark-mode .swagger-ui .filter .operation-filter-input {
+.swagger-ui .filter .operation-filter-input {
   background: var(--bg-input) !important;
   border: 1px solid var(--line) !important;
   border-radius: 999px !important;
@@ -243,8 +198,7 @@ body {
 }
 
 /* ================= tags ================= */
-.swagger-ui .opblock-tag-section h3.opblock-tag,
-.dark-mode .swagger-ui .opblock-tag-section h3.opblock-tag {
+.swagger-ui .opblock-tag-section h3.opblock-tag {
   border-bottom: 1px solid var(--line) !important;
   color: var(--text) !important;
   font-size: 20px !important;
@@ -253,16 +207,14 @@ body {
 }
 
 .swagger-ui .opblock-tag-section h3.opblock-tag small,
-.swagger-ui .opblock-tag small,
-.dark-mode .swagger-ui .opblock-tag small {
+.swagger-ui .opblock-tag small {
   color: var(--text-muted) !important;
   font-size: 14px !important;
   font-weight: 400 !important;
 }
 
 /* ================= blocos de operação ================= */
-.swagger-ui .opblock,
-.dark-mode .swagger-ui .opblock {
+.swagger-ui .opblock {
   background: var(--bg-card) !important;
   border: 1px solid var(--line) !important;
   border-radius: var(--radius) !important;
@@ -270,14 +222,12 @@ body {
   margin-bottom: 14px !important;
 }
 
-.swagger-ui .opblock .opblock-summary,
-.dark-mode .swagger-ui .opblock .opblock-summary {
+.swagger-ui .opblock .opblock-summary {
   border: none !important;
   padding: 10px 14px !important;
 }
 
-.swagger-ui .opblock-summary-method,
-.dark-mode .swagger-ui .opblock-summary-method {
+.swagger-ui .opblock-summary-method {
   border-radius: 8px !important;
   font-size: 12px !important;
   font-weight: 800 !important;
@@ -289,98 +239,83 @@ body {
 }
 
 .swagger-ui .opblock-summary-path,
-.swagger-ui .opblock-summary-path a,
-.dark-mode .swagger-ui .opblock-summary-path {
+.swagger-ui .opblock-summary-path a {
   color: var(--text) !important;
   font-family: "JetBrains Mono", "Fira Code", Consolas, monospace !important;
   font-size: 15px !important;
   font-weight: 700 !important;
 }
 
-.swagger-ui .opblock-summary-description,
-.dark-mode .swagger-ui .opblock-summary-description {
+.swagger-ui .opblock-summary-description {
   color: var(--text-muted) !important;
   font-size: 13px !important;
   font-weight: 400 !important;
 }
 
-.swagger-ui .opblock.opblock-get,
-.dark-mode .swagger-ui .opblock.opblock-get {
+.swagger-ui .opblock.opblock-get {
   background: rgba(52, 211, 153, 0.1) !important;
   border-color: var(--get) !important;
 }
-.swagger-ui .opblock.opblock-get .opblock-summary-method,
-.dark-mode .swagger-ui .opblock.opblock-get .opblock-summary-method {
+.swagger-ui .opblock.opblock-get .opblock-summary-method {
   background: var(--get) !important;
   color: var(--get-ink) !important;
 }
 
-.swagger-ui .opblock.opblock-post,
-.dark-mode .swagger-ui .opblock.opblock-post {
+.swagger-ui .opblock.opblock-post {
   background: rgba(167, 139, 250, 0.12) !important;
   border-color: var(--post) !important;
 }
-.swagger-ui .opblock.opblock-post .opblock-summary-method,
-.dark-mode .swagger-ui .opblock.opblock-post .opblock-summary-method {
+.swagger-ui .opblock.opblock-post .opblock-summary-method {
   background: var(--post) !important;
   color: var(--post-ink) !important;
 }
 
-.swagger-ui .opblock.opblock-put,
-.dark-mode .swagger-ui .opblock.opblock-put {
+.swagger-ui .opblock.opblock-put {
   background: rgba(251, 191, 36, 0.1) !important;
   border-color: var(--put) !important;
 }
-.swagger-ui .opblock.opblock-put .opblock-summary-method,
-.dark-mode .swagger-ui .opblock.opblock-put .opblock-summary-method {
+.swagger-ui .opblock.opblock-put .opblock-summary-method {
   background: var(--put) !important;
   color: var(--put-ink) !important;
 }
 
-.swagger-ui .opblock.opblock-delete,
-.dark-mode .swagger-ui .opblock.opblock-delete {
+.swagger-ui .opblock.opblock-delete {
   background: rgba(248, 113, 113, 0.1) !important;
   border-color: var(--delete) !important;
 }
-.swagger-ui .opblock.opblock-delete .opblock-summary-method,
-.dark-mode .swagger-ui .opblock.opblock-delete .opblock-summary-method {
+.swagger-ui .opblock.opblock-delete .opblock-summary-method {
   background: var(--delete) !important;
   color: var(--delete-ink) !important;
 }
 
-.swagger-ui .opblock.opblock-patch,
-.dark-mode .swagger-ui .opblock.opblock-patch {
+.swagger-ui .opblock.opblock-patch {
   background: rgba(45, 212, 191, 0.1) !important;
   border-color: var(--patch) !important;
 }
-.swagger-ui .opblock.opblock-patch .opblock-summary-method,
-.dark-mode .swagger-ui .opblock.opblock-patch .opblock-summary-method {
+.swagger-ui .opblock.opblock-patch .opblock-summary-method {
   background: var(--patch) !important;
   color: var(--patch-ink) !important;
 }
 
 /* ================= corpo da operação ================= */
-.swagger-ui .opblock .opblock-body,
-.dark-mode .swagger-ui .opblock .opblock-body {
+.swagger-ui .opblock .opblock-body {
   background: rgba(0, 0, 0, 0.22) !important;
   border-top: 1px solid var(--line) !important;
 }
 
 .swagger-ui .opblock-description-wrapper p,
-.swagger-ui .opblock-external-docs-wrapper,
-.dark-mode .swagger-ui .opblock-description-wrapper p {
+.swagger-ui .opblock-external-docs-wrapper {
   color: var(--text-muted) !important;
   font-size: 14px !important;
   line-height: 1.65 !important;
 }
 
 .swagger-ui .opblock .opblock-section-header,
-html.dark-mode .swagger-ui .opblock .opblock-section-header,
-html.dark-mode .swagger-ui .opblock.opblock-get .opblock-section-header,
-html.dark-mode .swagger-ui .opblock.opblock-post .opblock-section-header,
-html.dark-mode .swagger-ui .opblock.opblock-put .opblock-section-header,
-html.dark-mode .swagger-ui .opblock.opblock-delete .opblock-section-header,
-html.dark-mode .swagger-ui .opblock.opblock-patch .opblock-section-header {
+.swagger-ui .opblock.opblock-get .opblock-section-header,
+.swagger-ui .opblock.opblock-post .opblock-section-header,
+.swagger-ui .opblock.opblock-put .opblock-section-header,
+.swagger-ui .opblock.opblock-delete .opblock-section-header,
+.swagger-ui .opblock.opblock-patch .opblock-section-header {
   background: rgba(0, 0, 0, 0.28) !important;
   border-bottom: 1px solid var(--line) !important;
   border-top: none !important;
@@ -388,29 +323,25 @@ html.dark-mode .swagger-ui .opblock.opblock-patch .opblock-section-header {
   padding: 6px 14px !important;
 }
 
-.swagger-ui .opblock .tab-header .tab-item h4 span,
-html.dark-mode .swagger-ui .opblock .tab-header .tab-item h4 span {
+.swagger-ui .opblock .tab-header .tab-item h4 span {
   color: var(--text) !important;
   font-size: 14px !important;
   font-weight: 700 !important;
 }
 
-.swagger-ui .opblock .tab-header .tab-item.active h4 span::after,
-html.dark-mode .swagger-ui .opblock .tab-header .tab-item.active h4 span::after {
+.swagger-ui .opblock .tab-header .tab-item.active h4 span::after {
   background: var(--brand-mint) !important;
 }
 
 .swagger-ui .opblock-section-header h4,
 .swagger-ui .responses-inner h4,
-.swagger-ui .responses-inner h5,
-.dark-mode .swagger-ui .responses-inner h4 {
+.swagger-ui .responses-inner h5 {
   color: var(--text) !important;
   font-size: 15px !important;
   font-weight: 700 !important;
 }
 
-.swagger-ui table.parameters thead th,
-.dark-mode .swagger-ui table.parameters thead th {
+.swagger-ui table.parameters thead th {
   border-bottom: 1px solid var(--line) !important;
   color: var(--text-muted) !important;
   font-size: 12px !important;
@@ -418,27 +349,23 @@ html.dark-mode .swagger-ui .opblock .tab-header .tab-item.active h4 span::after 
   text-transform: uppercase !important;
 }
 
-.swagger-ui table.parameters tbody tr,
-.dark-mode .swagger-ui table.parameters tbody tr {
+.swagger-ui table.parameters tbody tr {
   border-bottom: 1px solid rgba(122, 119, 218, 0.2) !important;
 }
 
-.swagger-ui .parameter__name,
-.dark-mode .swagger-ui .parameter__name {
+.swagger-ui .parameter__name {
   color: var(--text) !important;
   font-size: 14px !important;
   font-weight: 600 !important;
 }
 
 .swagger-ui .parameter__type,
-.swagger-ui .parameter__in,
-.dark-mode .swagger-ui .parameter__type {
+.swagger-ui .parameter__in {
   color: var(--text-muted) !important;
   font-size: 12px !important;
 }
 
-.swagger-ui .parameter__name.required::after,
-.dark-mode .swagger-ui .parameter__name.required::after {
+.swagger-ui .parameter__name.required::after {
   color: var(--brand-mint) !important;
 }
 
@@ -452,10 +379,7 @@ html.dark-mode .swagger-ui .opblock .tab-header .tab-item.active h4 span::after 
 .swagger-ui input[type="search"],
 .swagger-ui input[type="number"],
 .swagger-ui textarea,
-.swagger-ui select,
-.dark-mode .swagger-ui input[type="text"],
-.dark-mode .swagger-ui textarea,
-.dark-mode .swagger-ui select {
+.swagger-ui select {
   background: var(--bg-input) !important;
   border: 1px solid var(--line) !important;
   border-radius: 10px !important;
@@ -464,22 +388,19 @@ html.dark-mode .swagger-ui .opblock .tab-header .tab-item.active h4 span::after 
 }
 
 .swagger-ui input::placeholder,
-.swagger-ui textarea::placeholder,
-.dark-mode .swagger-ui textarea::placeholder {
+.swagger-ui textarea::placeholder {
   color: var(--text-faint) !important;
 }
 
 /* ================= botões ================= */
-.swagger-ui .btn,
-.dark-mode .swagger-ui .btn {
+.swagger-ui .btn {
   border-radius: 999px !important;
   font-size: 13px !important;
   font-weight: 700 !important;
   padding: 8px 22px !important;
 }
 
-.swagger-ui .btn.try-out__btn,
-.dark-mode .swagger-ui .btn.try-out__btn {
+.swagger-ui .btn.try-out__btn {
   background: transparent !important;
   border: 1px solid var(--line) !important;
   color: var(--text) !important;
@@ -490,27 +411,23 @@ html.dark-mode .swagger-ui .opblock .tab-header .tab-item.active h4 span::after 
   color: var(--brand-mint) !important;
 }
 
-.swagger-ui .btn.execute,
-.dark-mode .swagger-ui .btn.execute {
+.swagger-ui .btn.execute {
   background: linear-gradient(180deg, #8df5ae, var(--brand-mint-strong)) !important;
   border: none !important;
   box-shadow: 0 6px 18px rgba(52, 224, 126, 0.35) !important;
   color: var(--brand-mint-ink) !important;
 }
 
-.swagger-ui .btn.authorize,
-.dark-mode .swagger-ui .btn.authorize {
+.swagger-ui .btn.authorize {
   border-color: var(--line) !important;
   color: var(--brand-mint) !important;
 }
 
-.swagger-ui .btn.authorize svg,
-.dark-mode .swagger-ui .btn.authorize svg {
+.swagger-ui .btn.authorize svg {
   fill: var(--brand-mint) !important;
 }
 
-.swagger-ui .btn.cancel,
-.dark-mode .swagger-ui .btn.cancel {
+.swagger-ui .btn.cancel {
   border: 1px solid var(--line) !important;
   color: var(--text-muted) !important;
 }
@@ -526,13 +443,11 @@ html.dark-mode .swagger-ui .opblock .tab-header .tab-item.active h4 span::after 
 
 /* ================= respostas ================= */
 .swagger-ui .responses-table thead tr td,
-.swagger-ui .responses-table thead tr th,
-.dark-mode .swagger-ui .responses-table thead tr td {
+.swagger-ui .responses-table thead tr th {
   padding: 12px 20px !important;
 }
 
-.swagger-ui .response-col_status,
-.dark-mode .swagger-ui .response-col_status {
+.swagger-ui .response-col_status {
   color: var(--brand-mint) !important;
   font-size: 14px !important;
   font-weight: 800 !important;
@@ -540,32 +455,27 @@ html.dark-mode .swagger-ui .opblock .tab-header .tab-item.active h4 span::after 
   white-space: nowrap !important;
 }
 
-.swagger-ui .responses-table tbody tr td.response-col_description,
-.dark-mode .swagger-ui .responses-table tbody tr td.response-col_description {
+.swagger-ui .responses-table tbody tr td.response-col_description {
   padding: 14px 20px !important;
 }
 
 .swagger-ui .response-col_description,
-.swagger-ui .response-col_description p,
-.dark-mode .swagger-ui .response-col_description {
+.swagger-ui .response-col_description p {
   color: var(--text-muted) !important;
   font-size: 14px !important;
 }
 
-.swagger-ui .responses-table tbody tr td.response-col_links,
-.dark-mode .swagger-ui .responses-table tbody tr td.response-col_links {
+.swagger-ui .responses-table tbody tr td.response-col_links {
   padding: 14px 20px 14px 12px !important;
   text-align: right !important;
   white-space: nowrap !important;
 }
 
-.swagger-ui .responses-table tbody tr td,
-.dark-mode .swagger-ui .responses-table tbody tr td {
+.swagger-ui .responses-table tbody tr td {
   vertical-align: top !important;
 }
 
-.swagger-ui .responses-table,
-.dark-mode .swagger-ui .responses-table {
+.swagger-ui .responses-table {
   background: rgba(0, 0, 0, 0.22) !important;
   border: 1px solid var(--line) !important;
   border-radius: 12px !important;
@@ -577,8 +487,7 @@ html.dark-mode .swagger-ui .opblock .tab-header .tab-item.active h4 span::after 
 }
 
 /* erros de validação */
-.swagger-ui .errors,
-.dark-mode .swagger-ui .errors {
+.swagger-ui .errors {
   background: rgba(248, 113, 113, 0.12) !important;
   border: 1px solid var(--delete) !important;
   border-radius: 12px !important;
@@ -586,24 +495,21 @@ html.dark-mode .swagger-ui .opblock .tab-header .tab-item.active h4 span::after 
 }
 
 /* ================= models ================= */
-.swagger-ui section.models,
-.dark-mode .swagger-ui section.models {
+.swagger-ui section.models {
   background: var(--bg-card-2) !important;
   border: 1px solid var(--line) !important;
   border-radius: var(--radius) !important;
   padding: 16px 20px !important;
 }
 
-.swagger-ui section.models h4,
-.dark-mode .swagger-ui section.models h4 {
+.swagger-ui section.models h4 {
   color: var(--text) !important;
   font-size: 16px !important;
   font-weight: 700 !important;
 }
 
 .swagger-ui .model-box,
-.swagger-ui .model,
-.dark-mode .swagger-ui .model {
+.swagger-ui .model {
   background: transparent !important;
   color: var(--text-muted) !important;
   font-size: 14px !important;
@@ -611,20 +517,17 @@ html.dark-mode .swagger-ui .opblock .tab-header .tab-item.active h4 span::after 
 
 .swagger-ui .model-title,
 .swagger-ui .model .prop-name,
-.swagger-ui .model .prop-type,
-.dark-mode .swagger-ui .model .prop-name {
+.swagger-ui .model .prop-type {
   color: var(--text) !important;
   font-size: 14px !important;
 }
 
-.swagger-ui .model .prop-format,
-.dark-mode .swagger-ui .model .prop-format {
+.swagger-ui .model .prop-format {
   color: var(--text-faint) !important;
 }
 
 /* ---------- schemas (json-schema 2020-12): sem cromo nativo ---------- */
-.swagger-ui .json-schema-2020-12-accordion,
-html.dark-mode .swagger-ui .json-schema-2020-12-accordion {
+.swagger-ui .json-schema-2020-12-accordion {
   appearance: none !important;
   -webkit-appearance: none !important;
   background: transparent !important;
@@ -636,33 +539,28 @@ html.dark-mode .swagger-ui .json-schema-2020-12-accordion {
   padding: 4px 8px 4px 0 !important;
 }
 
-.swagger-ui .json-schema-2020-12-accordion:hover,
-html.dark-mode .swagger-ui .json-schema-2020-12-accordion:hover {
+.swagger-ui .json-schema-2020-12-accordion:hover {
   color: var(--brand-mint) !important;
 }
 
-.swagger-ui .json-schema-2020-12-accordion__icon,
-html.dark-mode .swagger-ui .json-schema-2020-12-accordion__icon {
+.swagger-ui .json-schema-2020-12-accordion__icon {
   color: var(--brand-mint) !important;
 }
 
-.swagger-ui .json-schema-2020-12__title,
-html.dark-mode .swagger-ui .json-schema-2020-12__title {
+.swagger-ui .json-schema-2020-12__title {
   color: var(--text) !important;
   font-size: 14px !important;
   font-weight: 700 !important;
 }
 
-.swagger-ui .json-schema-2020-12-property .json-schema-2020-12__title,
-html.dark-mode .swagger-ui .json-schema-2020-12-property .json-schema-2020-12__title {
+.swagger-ui .json-schema-2020-12-property .json-schema-2020-12__title {
   color: var(--text) !important;
   font-family: "JetBrains Mono", "Fira Code", Consolas, monospace !important;
   font-size: 14px !important;
   font-weight: 700 !important;
 }
 
-.swagger-ui .json-schema-2020-12-keyword__name--primary,
-html.dark-mode .swagger-ui .json-schema-2020-12-keyword__name--primary {
+.swagger-ui .json-schema-2020-12-keyword__name--primary {
   color: var(--text) !important;
   font-size: 14px !important;
   font-style: normal !important;
@@ -670,21 +568,18 @@ html.dark-mode .swagger-ui .json-schema-2020-12-keyword__name--primary {
 }
 
 .swagger-ui .json-schema-2020-12-keyword__name--secondary,
-.swagger-ui .json-schema-2020-12-keyword--description,
-html.dark-mode .swagger-ui .json-schema-2020-12-keyword--description {
+.swagger-ui .json-schema-2020-12-keyword--description {
   color: var(--text-muted) !important;
   font-size: 13px !important;
 }
 
-.swagger-ui .json-schema-2020-12-keyword,
-html.dark-mode .swagger-ui .json-schema-2020-12-keyword {
+.swagger-ui .json-schema-2020-12-keyword {
   color: var(--text-muted) !important;
   font-size: 13px !important;
 }
 
 /* pílulas de formato/restrição: texto escuro sobre fundo colorido */
-.swagger-ui .json-schema-2020-12__constraint,
-html.dark-mode .swagger-ui .json-schema-2020-12__constraint {
+.swagger-ui .json-schema-2020-12__constraint {
   background-color: var(--post) !important;
   border-radius: 6px !important;
   color: var(--post-ink) !important;
@@ -693,15 +588,13 @@ html.dark-mode .swagger-ui .json-schema-2020-12__constraint {
   padding: 2px 8px !important;
 }
 
-.swagger-ui .json-schema-2020-12__constraint--string,
-html.dark-mode .swagger-ui .json-schema-2020-12__constraint--string {
+.swagger-ui .json-schema-2020-12__constraint--string {
   background-color: var(--put) !important;
   color: var(--put-ink) !important;
 }
 
 /* expandir/recolher tudo: sem cromo nativo, legível */
-.swagger-ui .json-schema-2020-12-expand-deep-button,
-html.dark-mode .swagger-ui .json-schema-2020-12-expand-deep-button {
+.swagger-ui .json-schema-2020-12-expand-deep-button {
   appearance: none !important;
   -webkit-appearance: none !important;
   background: transparent !important;
@@ -712,20 +605,17 @@ html.dark-mode .swagger-ui .json-schema-2020-12-expand-deep-button {
   font-weight: 600 !important;
 }
 
-.swagger-ui .json-schema-2020-12-expand-deep-button:hover,
-html.dark-mode .swagger-ui .json-schema-2020-12-expand-deep-button:hover {
+.swagger-ui .json-schema-2020-12-expand-deep-button:hover {
   text-decoration: underline !important;
 }
 
 /* linhas de propriedade com respiro */
-.swagger-ui .json-schema-2020-12-property,
-html.dark-mode .swagger-ui .json-schema-2020-12-property {
+.swagger-ui .json-schema-2020-12-property {
   margin: 10px 0 !important;
 }
 
 /* chevron dos toggles clássicos sempre visível no escuro */
-.swagger-ui .model-toggle::after,
-html.dark-mode .swagger-ui .model-toggle::after {
+.swagger-ui .model-toggle::after {
   background: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath fill='%23e4e6e6' d='M10 6 8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z'/%3E%3C/svg%3E") 50% no-repeat !important;
   background-size: 100% !important;
   height: 20px !important;
@@ -733,8 +623,7 @@ html.dark-mode .swagger-ui .model-toggle::after {
 }
 
 /* ================= diálogos ================= */
-.swagger-ui .dialog-ux .modal-ux,
-.dark-mode .swagger-ui .dialog-ux .modal-ux {
+.swagger-ui .dialog-ux .modal-ux {
   background: var(--bg-card) !important;
   border: 1px solid var(--line) !important;
   border-radius: 16px !important;
@@ -742,35 +631,30 @@ html.dark-mode .swagger-ui .model-toggle::after {
 
 .swagger-ui .dialog-ux .modal-ux-header h3,
 .swagger-ui .dialog-ux .modal-ux-content p,
-.swagger-ui .dialog-ux .modal-ux-content label,
-.dark-mode .swagger-ui .dialog-ux .modal-ux-content label {
+.swagger-ui .dialog-ux .modal-ux-content label {
   color: var(--text) !important;
   font-size: 14px !important;
 }
 
-.swagger-ui .auth-btn-wrapper .btn-done,
-.dark-mode .swagger-ui .auth-btn-wrapper .btn-done {
+.swagger-ui .auth-btn-wrapper .btn-done {
   background: linear-gradient(180deg, #8df5ae, var(--brand-mint-strong)) !important;
   border: none !important;
   color: var(--brand-mint-ink) !important;
 }
 
 /* copiar mantém legibilidade no escuro */
-.swagger-ui .copy-to-clipboard button,
-.dark-mode .swagger-ui .copy-to-clipboard button {
+.swagger-ui .copy-to-clipboard button {
   background: rgba(125, 240, 166, 0.14) !important;
   color: var(--brand-mint) !important;
 }
 
 /* ---------- linha da operação: copiar x seta sem sobrepor ---------- */
-.swagger-ui .opblock .opblock-summary,
-html.dark-mode .swagger-ui .opblock .opblock-summary {
+.swagger-ui .opblock .opblock-summary {
   gap: 10px !important;
   padding-right: 16px !important;
 }
 
-.swagger-ui .opblock .opblock-summary .view-line-link.copy-to-clipboard,
-html.dark-mode .swagger-ui .opblock .opblock-summary .view-line-link.copy-to-clipboard {
+.swagger-ui .opblock .opblock-summary .view-line-link.copy-to-clipboard {
   background: transparent !important;
   bottom: auto !important;
   flex-shrink: 0 !important;
@@ -781,22 +665,19 @@ html.dark-mode .swagger-ui .opblock .opblock-summary .view-line-link.copy-to-cli
   width: 30px !important;
 }
 
-.swagger-ui .opblock .opblock-summary .view-line-link.copy-to-clipboard button,
-html.dark-mode .swagger-ui .opblock .opblock-summary .view-line-link.copy-to-clipboard button {
+.swagger-ui .opblock .opblock-summary .view-line-link.copy-to-clipboard button {
   border-radius: 8px !important;
   height: 30px !important;
   width: 30px !important;
 }
 
-.swagger-ui .opblock-control-arrow,
-html.dark-mode .swagger-ui .opblock-control-arrow {
+.swagger-ui .opblock-control-arrow {
   color: var(--text-muted) !important;
   flex-shrink: 0 !important;
   margin-left: 2px !important;
 }
 
-.swagger-ui .opblock-control-arrow svg,
-html.dark-mode .swagger-ui .opblock-control-arrow svg {
+.swagger-ui .opblock-control-arrow svg {
   fill: var(--text-muted) !important;
   height: 20px !important;
   width: 20px !important;
@@ -826,11 +707,49 @@ html.dark-mode .swagger-ui .opblock-control-arrow svg {
     font-size: 24px !important;
   }
 
-  .swagger-ui .topbar .topbar-wrapper::before {
-    font-size: 17px !important;
+  .swagger-ui .corp-swagger-brand {
+    font-size: 17px;
   }
+}
 
-  .swagger-ui .topbar .download-url-wrapper {
-    display: none !important;
-  }
+/* Text and icons that inherit the stock Swagger UI foreground. */
+.swagger-ui .renderedMarkdown,
+.swagger-ui .renderedMarkdown :is(h1, h2, h3, h4, h5, h6),
+.swagger-ui .headers-wrapper :is(th, td, .header-example, .header-name, .header-type),
+.swagger-ui .tab :is(li, button),
+.swagger-ui .parameter__in,
+.swagger-ui .parameter__enum,
+.swagger-ui .parameters-col_description > p,
+.swagger-ui .opblock .response-control-media-type__accept-message {
+  color: var(--text) !important;
+}
+
+.swagger-ui .renderedMarkdown :not(pre) > code {
+  background: var(--bg-input) !important;
+  color: var(--text) !important;
+  overflow-wrap: anywhere;
+}
+
+.swagger-ui .opblock .authorization__btn {
+  opacity: 1 !important;
+}
+
+.swagger-ui .opblock .authorization__btn svg,
+.swagger-ui .opblock-tag .expand-operation svg,
+.swagger-ui section.models .expand-methods svg,
+.swagger-ui .dialog-ux .close-modal svg {
+  fill: var(--text) !important;
+}
+
+.swagger-ui .opblock .authorization__btn.locked svg {
+  fill: var(--brand-mint) !important;
+}
+
+.swagger-ui :is(select, button):focus-visible {
+  outline: 2px solid var(--brand-mint) !important;
+  outline-offset: 2px;
+}
+
+.swagger-ui .topbar select:focus-visible {
+  outline-color: var(--brand-ink) !important;
 }
