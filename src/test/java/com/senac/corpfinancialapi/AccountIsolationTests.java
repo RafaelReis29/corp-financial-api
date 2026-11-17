@@ -1,5 +1,6 @@
 package com.senac.corpfinancialapi;
 
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.util.UUID;
 
@@ -113,7 +114,7 @@ class AccountIsolationTests {
                         .contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isCreated())
                 .andReturn();
-        String location = location(created);
+        String location = resourcePath(created);
         assertThat(location).startsWith(collection + "/").isNotEqualTo(missing);
         return location;
     }
@@ -132,7 +133,7 @@ class AccountIsolationTests {
                 .andExpect(header().string(ApiHeaders.RATE_LIMIT, "60"))
                 .andExpect(header().string(ApiHeaders.RATE_REMAINING, "59"))
                 .andReturn();
-        String firstCompany = location(first);
+        String firstCompany = resourcePath(first);
         create("/companies", premium, company.replace("First copy", "Second copy"))
                 .andExpect(header().string(ApiHeaders.RATE_LIMIT, "300"))
                 .andExpect(header().string(ApiHeaders.RATE_REMAINING, "299"));
@@ -145,11 +146,11 @@ class AccountIsolationTests {
         mvc.perform(put(firstCompany).header(ApiHeaders.API_KEY, premium).contentType(MediaType.APPLICATION_JSON)
                         .content(company.replace("SHARED-DOC", "NEW-DOC")))
                 .andExpect(status().isCreated())
-                .andExpect(header().exists(HttpHeaders.LOCATION));
+                .andExpect(header().doesNotExist(HttpHeaders.LOCATION));
         mvc.perform(get(firstCompany).header(ApiHeaders.API_KEY, basic))
                 .andExpect(jsonPath("$.company.tradeName").value("First copy"));
 
-        String companyToDelete = location(create("/companies", premium,
+        String companyToDelete = resourcePath(create("/companies", premium,
                 company.replace("SHARED-DOC", "DELETE-DOC")).andReturn());
         mvc.perform(delete(companyToDelete).header(ApiHeaders.API_KEY, premium))
                 .andExpect(status().isForbidden());
@@ -169,11 +170,11 @@ class AccountIsolationTests {
         long otherCompany = resourceId(create("/companies", other,
                 "{\"tradeName\":\"Other Company\",\"legalName\":\"Other Company Ltda\",\"docNumber\":\"OTHER-DOC\"}").andReturn());
         String contact = "{\"companyId\":%d,\"name\":\"Contact Owner\"}".formatted(company);
-        String contactPath = location(create("/contacts", owner, contact).andReturn());
-        String contract = location(create("/contracts", owner, """
+        String contactPath = resourcePath(create("/contacts", owner, contact).andReturn());
+        String contract = resourcePath(create("/contracts", owner, """
                 {"companyId":%d,"title":"Contrato","totalValue":100,"currency":"BRL","startDate":"2026-01-01","status":"ATIVO"}
                 """.formatted(company)).andReturn());
-        String payment = location(create("/payment-methods", owner, """
+        String payment = resourcePath(create("/payment-methods", owner, """
                 {"companyId":%d,"type":"PIX","label":"Conta principal"}
                 """.formatted(company)).andReturn());
         long otherPayment = resourceId(create("/payment-methods", other, """
@@ -182,7 +183,7 @@ class AccountIsolationTests {
         String invoice = """
                 {"contractId":%d,"amount":100,"dueDate":"2026-12-01","status":"PENDENTE","paymentMethodId":%d}
                 """;
-        String invoicePath = location(create("/invoices", owner, invoice.formatted(pathId(contract), pathId(payment))).andReturn());
+        String invoicePath = resourcePath(create("/invoices", owner, invoice.formatted(pathId(contract), pathId(payment))).andReturn());
 
         for (String path : new String[]{contactPath, contract, payment, invoicePath}) {
             mvc.perform(get(path).header(ApiHeaders.API_KEY, other)).andExpect(status().isNotFound());
@@ -209,7 +210,7 @@ class AccountIsolationTests {
     void demoOnlyReadsSeededRecordsAndCannotBeSelectedByPaidCredentials() throws Exception {
         String account = createAccount("Demo isolation");
         String customer = issue(account, "BASIC");
-        String company = location(create("/companies", customer,
+        String company = resourcePath(create("/companies", customer,
                 "{\"tradeName\":\"Private Company\",\"legalName\":\"Private Company Ltda\",\"docNumber\":\"PRIVATE-DOC\"}").andReturn());
         String demo = ApiKeys.PUBLIC_DEMO_KEY;
         mvc.perform(get("/companies/1").header(ApiHeaders.API_KEY, demo))
@@ -240,15 +241,17 @@ class AccountIsolationTests {
     private ResultActions create(String path, String key, String body) throws Exception {
         return mvc.perform(post(path).header(ApiHeaders.API_KEY, key).header(ApiHeaders.IDEMPOTENCY_KEY, UUID.randomUUID())
                         .contentType(MediaType.APPLICATION_JSON).content(body))
-                .andExpect(status().isCreated());
+                .andExpect(status().isCreated())
+                .andExpect(header().doesNotExist(HttpHeaders.LOCATION));
     }
 
-    private static String location(MvcResult result) {
-        return URI.create(result.getResponse().getHeader(HttpHeaders.LOCATION)).getPath();
+    private static String resourcePath(MvcResult result) throws UnsupportedEncodingException {
+        String self = JsonPath.read(result.getResponse().getContentAsString(), "$._links.self.href");
+        return URI.create(self).getPath();
     }
 
-    private static long resourceId(MvcResult result) {
-        return pathId(location(result));
+    private static long resourceId(MvcResult result) throws UnsupportedEncodingException {
+        return pathId(resourcePath(result));
     }
 
     private static long pathId(String path) {

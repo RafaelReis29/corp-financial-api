@@ -3,6 +3,7 @@ package com.senac.corpfinancialapi;
 import java.net.URI;
 import java.util.UUID;
 
+import com.jayway.jsonpath.JsonPath;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -57,9 +58,9 @@ class HttpResponsesTests {
                 .andExpect(jsonPath(collection + ".get.responses['400']").exists())
                 .andExpect(jsonPath(collection + ".get.responses['404']").exists())
                 .andExpect(jsonPath(collection + ".post.responses['404']").exists())
-                .andExpect(jsonPath(collection + ".post.responses['201'].headers.Location").exists())
+                .andExpect(jsonPath(collection + ".post.responses['201'].headers.Location").doesNotExist())
                 .andExpect(jsonPath(item + ".put.responses['404']").exists())
-                .andExpect(jsonPath(item + ".put.responses['201'].headers.Location").exists())
+                .andExpect(jsonPath(item + ".put.responses['201'].headers.Location").doesNotExist())
                 .andExpect(jsonPath(item + ".get.responses['400']").exists())
                 .andExpect(jsonPath(item + ".get.responses['404'].content['application/problem+json'].schema['$ref']").value("#/components/schemas/ApiProblem"))
                 .andExpect(jsonPath(item + ".delete.responses['400']").exists())
@@ -118,12 +119,12 @@ class HttpResponsesTests {
             /payment-methods | {"companyId":1,"type":"PIX","label":"Test Account"}
             """)
     void creationUpdateAndDeletionReturnDocumentedStatuses(String path, String body) throws Exception {
-        String location = perform(post(path).header(ApiHeaders.IDEMPOTENCY_KEY, UUID.randomUUID())
+        String createdBody = perform(post(path).header(ApiHeaders.IDEMPOTENCY_KEY, UUID.randomUUID())
                         .contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isCreated())
-                .andExpect(header().exists("Location"))
-                .andReturn().getResponse().getHeader("Location");
-        URI item = URI.create(location);
+                .andExpect(header().doesNotExist("Location"))
+                .andReturn().getResponse().getContentAsString();
+        URI item = URI.create(JsonPath.read(createdBody, "$._links.self.href"));
 
         perform(get(item))
                 .andExpect(status().isOk());
@@ -137,9 +138,9 @@ class HttpResponsesTests {
 
         String createdByPut = perform(put(path + "/{id}", MISSING_ID).contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isCreated())
-                .andExpect(header().exists("Location"))
-                .andReturn().getResponse().getHeader("Location");
-        URI createdItem = URI.create(createdByPut);
+                .andExpect(header().doesNotExist("Location"))
+                .andReturn().getResponse().getContentAsString();
+        URI createdItem = URI.create(JsonPath.read(createdByPut, "$._links.self.href"));
         assertThat(createdItem.getPath()).startsWith(path + "/").doesNotEndWith("/" + MISSING_ID);
         perform(get(createdItem)).andExpect(status().isOk());
         perform(delete(createdItem)).andExpect(status().isNoContent());

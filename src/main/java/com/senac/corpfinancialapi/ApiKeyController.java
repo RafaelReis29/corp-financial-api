@@ -25,7 +25,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 @RestController
 @RequestMapping(path = "/api-keys", version = "1+")
@@ -58,8 +57,7 @@ class ApiKeyController {
             }
             ApiKeys.IssuedKey issued = keys.issue(request.label().strip(), account, ApiKeyType.valueOf(request.type()));
             KeyMetadata metadata = KeyMetadata.from(issued.credential());
-            var location = ServletUriComponentsBuilder.fromCurrentRequestUri().path("/{id}").buildAndExpand(metadata.id()).toUri();
-            return ResponseEntity.created(location).cacheControl(CacheControl.noStore()).body(new KeyCreated(metadata, issued.secret()));
+            return ResponseEntity.status(HttpStatus.CREATED).cacheControl(CacheControl.noStore()).body(new KeyCreated(metadata, issued.secret()));
         });
     }
 

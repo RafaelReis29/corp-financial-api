@@ -30,7 +30,6 @@ Com Java 17, execute `sh mvnw spring-boot:run`. O banco H2 em memória é inicia
 | Variável de ambiente | Uso |
 | --- | --- |
 | `CORP_API_ADMIN_KEY` | Chave de administração, com 32 a 256 caracteres ASCII visíveis. Configure-a para emitir as primeiras chaves de cliente. |
-| `CORP_API_CORS_ORIGINS` | Origens autorizadas, separadas por vírgulas. Os padrões são `localhost` e `127.0.0.1`, via HTTP nas portas 3000 e 5173. Se definir a variável, informe todas as origens necessárias, com protocolo, domínio e porta quando aplicável. |
 | `CORP_API_REQUESTS_PER_MINUTE` | Limite da chave Admin e das requisições sem chave válida, por IP. O padrão é 120 por minuto. |
 
 Para consultas paginadas, use `page`, `size` e `sort`. A ordenação usa campos do próprio recurso, por exemplo `sort=tradeName,asc` para empresas. Para atualização, envie o corpo completo. Para baixa de fatura, envie o status `PAGO` com `paidAt` preenchido. Para fatura em aberto, use `PENDENTE` com `paidAt` ausente.
@@ -45,7 +44,7 @@ Use `X-API-Key` em todas as operações. No Swagger UI, clique em **Authorize** 
 
 No Render, defina `CORP_API_ADMIN_KEY` nas variáveis de ambiente do serviço do backend. Cole apenas o valor da chave e faça um deploy para carregar a configuração. Ao iniciar, a API registra se a variável está configurada, sem imprimir seu valor.
 
-Teste primeiro `GET /accounts` no Swagger com a chave Admin. Um `200` confirma o acesso administrativo. Um `401` indica que o serviço não reconheceu a chave. Confira o valor configurado e o último deploy. Se o Swagger funcionar e o front-end falhar, confira se `CORP_API_CORS_ORIGINS` inclui a origem exata do front-end.
+Teste primeiro `GET /accounts` no Swagger com a chave Admin. Um `200` confirma o acesso administrativo. Um `401` indica que o serviço não reconheceu a chave. Confira o valor configurado e o último deploy. Se o Swagger funcionar e o front-end falhar, confira a URL usada pelo painel e a resposta no navegador. O CORS permite qualquer origem diretamente em `CorsConfig`, com `allowedOrigins("*")`.
 
 | Chave | Mensalidade de referência | Limite | Operações |
 | --- | ---: | --- | --- |
@@ -90,7 +89,7 @@ Envie `X-API-Version` com `1.0.0`, `1.0.1` ou `2.0.0`. Sem o cabeçalho, a API u
 | Status | Quando é retornado |
 | --- | --- |
 | `200 OK` | Consulta ou atualização bem-sucedida. Listagens retornam `200` mesmo quando a página está vazia. |
-| `201 Created` | Criação bem-sucedida. O cabeçalho `Location` aponta para o recurso criado. |
+| `201 Created` | Criação bem-sucedida. O corpo contém o registro criado. |
 | `204 No Content` | Exclusão bem-sucedida, com corpo vazio. |
 | `400 Bad Request` | Versão, corpo, identificador, paginação ou ordenação inválida. |
 | `401 Unauthorized` | Chave ausente ou inválida em uma operação protegida. |
@@ -103,7 +102,7 @@ Envie `X-API-Version` com `1.0.0`, `1.0.1` ou `2.0.0`. Sem o cabeçalho, a API u
 
 Erros da aplicação usam `application/problem+json` com `status` e `detail`. Quando o corpo falha na validação, `errors` identifica os campos e descreve o problema. A exclusão de um registro de domínio inexistente retorna `404` com corpo vazio.
 
-Um `PUT` em um ID existente retorna `200`. Se o ID não pertencer à conta, o servidor cria um registro associado a essa conta com ID gerado e retorna `201`. Referências enviadas no corpo, como `companyId`, `contractId` e `paymentMethodId`, devem pertencer à mesma conta. O `Location` indica a URI efetiva do novo registro e permite encontrá-lo sem ler o corpo. O link `self` no corpo informa o mesmo destino para clientes que navegam pelos links HATEOAS. Para continuar trabalhando com um registro criado por `PUT`, use a URI retornada.
+Um `PUT` em um ID existente retorna `200`. Se o ID não pertencer à conta, o servidor cria um registro associado a essa conta com ID gerado e retorna `201`. Referências enviadas no corpo, como `companyId`, `contractId` e `paymentMethodId`, devem pertencer à mesma conta. O link `self` no corpo informa o endereço do novo registro. Para continuar trabalhando com um registro criado por `PUT`, use esse link ou o ID retornado no corpo.
 
 ## Carga inicial
 

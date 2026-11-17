@@ -119,10 +119,6 @@ public class OpenApi {
                     .addHeaderObject(ApiHeaders.IDEMPOTENCY_REPLAYED, new Header().description("Na versão 2.0.0, indica que a resposta original foi reaproveitada").schema(new StringSchema()._enum(List.of("true"))));
             addProblem(operation, "503", "Armazenamento temporário de idempotência da versão 2.0.0 indisponível");
         }
-        if (operation.getResponses().containsKey("201")) {
-            operation.getResponses().get("201").addHeaderObject(HttpHeaders.LOCATION,
-                    new Header().description("URI do recurso criado").schema(new StringSchema().format("uri")));
-        }
         if (writesBody) {
             addProblem(operation, "415", "Formato do corpo não aceito");
         }

@@ -19,7 +19,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 @RestController
 @RequestMapping(path = "/accounts", version = "1+")
@@ -40,8 +39,7 @@ class AccountController {
     ResponseEntity<AccountMetadata> create(@RequestBody @Valid CreateAccount request) {
         return posts.execute(request, () -> {
             AccountMetadata account = AccountMetadata.from(repository.save(new Account(request.name().strip(), false)));
-            var location = ServletUriComponentsBuilder.fromCurrentRequestUri().path("/{id}").buildAndExpand(account.id()).toUri();
-            return ResponseEntity.created(location).body(account);
+            return ResponseEntity.status(HttpStatus.CREATED).body(account);
         });
     }
 

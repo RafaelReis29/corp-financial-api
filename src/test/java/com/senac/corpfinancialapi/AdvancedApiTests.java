@@ -1,6 +1,5 @@
 package com.senac.corpfinancialapi;
 
-import java.net.URI;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
@@ -64,16 +63,18 @@ class AdvancedApiTests {
                                 """.formatted(accountId)))
                 .andExpect(status().isCreated())
                 .andExpect(header().string(HttpHeaders.CACHE_CONTROL, "no-store"))
+                .andExpect(header().doesNotExist(HttpHeaders.LOCATION))
                 .andExpect(jsonPath("$.metadata.label").value("Finance team"))
                 .andReturn();
         String credential = JsonPath.read(creation.getResponse().getContentAsString(), "$.apiKey");
-        URI location = URI.create(creation.getResponse().getHeader(HttpHeaders.LOCATION));
+        String keyId = JsonPath.read(creation.getResponse().getContentAsString(), "$.metadata.id");
+        String keyPath = "/api-keys/" + keyId;
 
         mvc.perform(get("/invoices").header(ApiHeaders.API_KEY, credential))
                 .andExpect(status().isOk());
         mvc.perform(get("/api-keys").header(ApiHeaders.API_KEY, credential))
                 .andExpect(status().isForbidden());
-        mvc.perform(get(location).header(ApiHeaders.API_KEY, ADMIN_KEY))
+        mvc.perform(get(keyPath).header(ApiHeaders.API_KEY, ADMIN_KEY))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.label").value("Finance team"))
                 .andExpect(jsonPath("$.apiKey").doesNotExist())
@@ -82,7 +83,7 @@ class AdvancedApiTests {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].label").value("Finance team"))
                 .andExpect(jsonPath("$[0].apiKey").doesNotExist());
-        mvc.perform(delete(location).header(ApiHeaders.API_KEY, ADMIN_KEY))
+        mvc.perform(delete(keyPath).header(ApiHeaders.API_KEY, ADMIN_KEY))
                 .andExpect(status().isNoContent());
         mvc.perform(get("/invoices").header(ApiHeaders.API_KEY, credential))
                 .andExpect(status().isUnauthorized());
@@ -98,7 +99,8 @@ class AdvancedApiTests {
         MvcResult replay = create("/companies", key, body);
         assertThat(replay.getResponse().getStatus()).isEqualTo(201);
         assertThat(replay.getResponse().getHeader(ApiHeaders.IDEMPOTENCY_REPLAYED)).isEqualTo("true");
-        assertThat(replay.getResponse().getHeader(HttpHeaders.LOCATION)).isEqualTo(first.getResponse().getHeader(HttpHeaders.LOCATION));
+        assertThat(first.getResponse().getHeader(HttpHeaders.LOCATION)).isNull();
+        assertThat(replay.getResponse().getHeader(HttpHeaders.LOCATION)).isNull();
         assertThat(replay.getResponse().getContentAsString()).isEqualTo(first.getResponse().getContentAsString());
         assertThat(create("/companies", key, companyBody("TEST-CHANGED")).getResponse().getStatus()).isEqualTo(409);
         assertThat(companies.count()).isEqualTo(count + 1);
@@ -235,25 +237,45 @@ class AdvancedApiTests {
     }
 
     @Test
-    void corsAllowsConfiguredOriginsAndCustomHeaders() throws Exception {
+    void corsAllowsAnyOriginAndCustomHeaders() throws Exception {
+        mvc.perform(options("/companies")
+                        .header(HttpHeaders.ORIGIN, "https://rafaelreis29.github.io")
+                        .header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, "POST")
+                        .header(HttpHeaders.ACCESS_CONTROL_REQUEST_HEADERS,
+                                "Content-Type,X-API-Key,X-API-Version,X-Account-Id,X-Idempotency-Key"))
+                .andExpect(status().isOk())
+                .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*"))
+                .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_HEADERS, containsString(ApiHeaders.ACCOUNT_ID)))
+                .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_HEADERS, containsString(ApiHeaders.IDEMPOTENCY_KEY)));
+        mvc.perform(get("/companies")
+                        .header(HttpHeaders.ORIGIN, "https://rafaelreis29.github.io")
+                        .header(ApiHeaders.API_KEY, ApiKeys.PUBLIC_DEMO_KEY)
+                        .header(ApiHeaders.VERSION, "2.0.0"))
+                .andExpect(status().isOk())
+                .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*"));
+        mvc.perform(get("/accounts")
+                        .header(HttpHeaders.ORIGIN, "https://rafaelreis29.github.io")
+                        .header(ApiHeaders.API_KEY, "invalid"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*"));
         mvc.perform(options("/invoices")
                         .header(HttpHeaders.ORIGIN, "http://localhost:5173")
                         .header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, "POST")
                         .header(HttpHeaders.ACCESS_CONTROL_REQUEST_HEADERS, "Content-Type,X-API-Key,X-Idempotency-Key,X-API-Version"))
                 .andExpect(status().isOk())
-                .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "http://localhost:5173"))
+                .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*"))
                 .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_HEADERS, containsString(ApiHeaders.API_KEY)));
         mvc.perform(options("/accounts")
                         .header(HttpHeaders.ORIGIN, "http://127.0.0.1:3000")
                         .header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, "GET")
                         .header(HttpHeaders.ACCESS_CONTROL_REQUEST_HEADERS, "X-API-Key,X-API-Version"))
                 .andExpect(status().isOk())
-                .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "http://127.0.0.1:3000"));
+                .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*"));
         mvc.perform(options("/invoices")
                         .header(HttpHeaders.ORIGIN, "https://unlisted.example")
                         .header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, "POST"))
-                .andExpect(status().isForbidden())
-                .andExpect(header().doesNotExist(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN));
+                .andExpect(status().isOk())
+                .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*"));
     }
 
     @Test
