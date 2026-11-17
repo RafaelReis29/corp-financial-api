@@ -12,8 +12,9 @@ O fluxo principal começa com o cadastro de empresas, continua com contatos e me
 
 Cada resposta inclui links de navegação, de modo que listagens apontam para detalhes, detalhes apontam para coleções, o que reduz a necessidade de montar endereços manualmente.
 
-Acesse a documentação: https://corp-financial-api.onrender.com/swagger-ui/index.html#/
-- Por lá, você pode conferir todas as operações http, as diferentes entidades e seus schemas, realizar requisições entendendo quais campos usar, os limites de caracteres de cada um e quais são esperados na resposta, além de termos de serviço.
+O Swagger UI apresenta os endpoints, os campos obrigatórios, os exemplos de requisição e as respostas de cada operação. Também permite executar chamadas diretamente pelo navegador. [Abrir documentação interativa](https://corp-financial-api.onrender.com/swagger-ui/index.html#/)
+
+O painel de demonstração permite explorar as entidades em uma interface visual. [Abrir painel](https://rafaelreis29.github.io/corp-api-front/)
 
 ## Recursos disponíveis
 
@@ -23,16 +24,24 @@ Acesse a documentação: https://corp-financial-api.onrender.com/swagger-ui/inde
 4. Meios de pagamento, com tipo em type, provedor em provider, apelido em label, referência operacional em details, além de isDefault.
 5. Faturas, com descrição em description, valor em amount, vencimento em dueDate, baixa em paidAt, fase em status.
 
-## Execução
+## Primeiros passos
 
-Com Java 17, execute `sh mvnw spring-boot:run`. O banco H2 em memória é iniciado com os dados de demonstração. A documentação da versão local fica em `/swagger-ui/index.html` e o contrato OpenAPI em `/v3/api-docs`.
+Para conhecer a API, utilize a chave pública de demonstração. Ela permite consultar os dados fictícios sem criar uma conta.
 
-| Variável de ambiente | Uso |
-| --- | --- |
-| `CORP_API_ADMIN_KEY` | Chave de administração, com 32 a 256 caracteres ASCII visíveis. Configure-a para emitir as primeiras chaves de cliente. |
-| `CORP_API_REQUESTS_PER_MINUTE` | Limite da chave Admin e das requisições sem chave válida, por IP. O padrão é 120 por minuto. |
+1. Abra o Swagger UI e clique em **Authorize**.
+2. Informe `cf_demo_0123456789abcdefghijklmnopqrstuvwxyzABCDEFG`.
+3. Abra `GET /companies`, clique em **Try it out** e depois em **Execute**.
+4. Copie o `id` de uma empresa retornada e consulte `GET /companies/{id}` para explorar seus detalhes.
 
-Para consultas paginadas, use `page`, `size` e `sort`. A ordenação usa campos do próprio recurso, por exemplo `sort=tradeName,asc` para empresas. Para atualização, envie o corpo completo. Para baixa de fatura, envie o status `PAGO` com `paidAt` preenchido. Para fatura em aberto, use `PENDENTE` com `paidAt` ausente.
+Também é possível fazer a primeira consulta pelo terminal.
+
+```sh
+curl 'https://corp-financial-api.onrender.com/companies?page=0&size=5' \
+  -H 'X-API-Key: cf_demo_0123456789abcdefghijklmnopqrstuvwxyzABCDEFG' \
+  -H 'X-API-Version: 2.0.0'
+```
+
+Uma resposta `200 OK` contém a página de empresas e os links de navegação. A chave Demo permite apenas consultas. Para testar criações, atualizações e exclusões, utilize uma chave Básica ou Premium associada a uma conta de cliente.
 
 ## Contas e chaves
 
@@ -40,41 +49,39 @@ A conta identifica a organização que usa a API. Cada empresa cadastrada repres
 
 Use `X-API-Key` em todas as operações. No Swagger UI, clique em **Authorize** e informe a credencial.
 
-### Verificar a chave Admin
-
-No Render, defina `CORP_API_ADMIN_KEY` nas variáveis de ambiente do serviço do backend. Cole apenas o valor da chave e faça um deploy para carregar a configuração. Ao iniciar, a API registra se a variável está configurada, sem imprimir seu valor.
-
-Teste primeiro `GET /accounts` no Swagger com a chave Admin. Um `200` confirma o acesso administrativo. Um `401` indica que o serviço não reconheceu a chave. Confira o valor configurado e o último deploy. Se o Swagger funcionar e o front-end falhar, confira a URL usada pelo painel e a resposta no navegador. O CORS permite qualquer origem diretamente em `CorsConfig`, com `allowedOrigins("*")`.
-
-| Chave | Mensalidade de referência | Limite | Operações |
+| Chave | Mensalidade de referência | Capacidade e reposição | Operações |
 | --- | ---: | --- | --- |
-| Básica (`cf_basic_`) | R$ 49 | 60 req/min por chave | Consulta, criação e atualização de registros associados à conta. Exclusão de registros dependentes quando não houver outros vínculos. |
-| Premium (`cf_premium_`) | R$ 149 | 300 req/min por chave | As mesmas operações da Básica, com maior capacidade de chamadas. |
-| Demo (`cf_demo_`) | Gratuita | 30 req/min por IP e 300 req/min compartilhadas | `GET` de listas e detalhes nos registros da conta de demonstração. |
+| Básica (`cf_basic_`) | R$ 49 | Saldo de até 60 chamadas por chave, com reposição de 1 por segundo. | Consulta, criação e atualização de registros associados à conta. Exclusão de contatos, contratos, faturas e meios de pagamento sem dependências. |
+| Premium (`cf_premium_`) | R$ 149 | Saldo de até 300 chamadas por chave, com reposição de 5 por segundo. | As mesmas operações da Básica, com maior capacidade de chamadas. |
+| Demo (`cf_demo_`) | Gratuita | Saldo de até 30 chamadas por IP, com reposição de 1 a cada 2 segundos. Saldo compartilhado de até 300, com reposição de 5 por segundo. | `GET` de listas e detalhes nos registros da conta de demonstração. |
 
 As mensalidades descrevem os planos. A API não executa cobrança. Básica e Premium podem excluir os próprios contatos, contratos, faturas e meios de pagamento. Para excluir um registro referenciado por outro, remova antes o vínculo ou o registro dependente. A exclusão de empresas é exclusiva do Admin.
 
-### Experimentar a API
+### Acesso aos dados
 
-Use a chave pública `cf_demo_0123456789abcdefghijklmnopqrstuvwxyzABCDEFG` e faça um `GET /companies` no Swagger. Os dados da carga inicial pertencem à conta de demonstração.
+A chave de cliente identifica automaticamente a conta cujos registros podem ser acessados. Empresas, contatos, contratos, faturas e meios de pagamento de outras contas ficam fora desse acesso. Guarde sua chave com cuidado, pois ela autoriza as operações da conta.
 
-### Criar uma conta e emitir uma chave
+Os endpoints `/accounts` e `/api-keys` são destinados à administração de contas e credenciais e exigem acesso Admin. A chave Demo e as chaves de cliente não permitem emitir ou revogar credenciais. O valor de uma nova chave é apresentado apenas na emissão.
 
-1. Com a chave Admin, envie `POST /accounts` com `{"name":"Minha organização"}` e copie o `id`. No Swagger, o campo de idempotência é preenchido automaticamente na 2.0.0. Use `GET /accounts` para listar as contas.
-2. Envie `POST /api-keys` com `{"label":"Financeiro","accountId":"<id da conta>","type":"BASIC"}`. Os tipos disponíveis para emissão são `BASIC` e `PREMIUM`.
-3. Use o valor de `apiKey` nas operações da nova conta. Guarde o segredo retornado na emissão. O banco guarda seu hash SHA-256. O Admin pode listar metadados em `GET /api-keys`, consultar uma credencial em `GET /api-keys/{id}` e revogá-la com `DELETE /api-keys/{id}`.
+## Consultas e alterações
 
-A credencial de cliente identifica a conta cujos registros podem ser acessados. Com a chave Admin, envie `X-Account-Id` para selecionar uma conta. Em `DELETE /companies/{id}`, a seleção é obrigatória. As outras operações com a chave Admin usam a demonstração por padrão. No H2 em memória, contas e chaves emitidas são descartadas ao reiniciar e a demonstração é recriada.
+Para consultas paginadas, use `page`, `size` e `sort`. A primeira página é `page=0`. A ordenação usa campos do próprio recurso, por exemplo `sort=tradeName,asc` para empresas. Uma página vazia retorna `200 OK`.
+
+Para cadastrar dados relacionados, comece pela empresa e reutilize seu `id` em `companyId` ao criar contatos, contratos ou meios de pagamento. Para uma fatura, informe o `contractId` do contrato e, opcionalmente, um `paymentMethodId`. As referências devem pertencer à mesma conta da chave utilizada.
+
+Uma atualização por `PUT` recebe o corpo completo do registro. Para baixar uma fatura, envie o status `PAGO` com `paidAt` preenchido. Para uma fatura em aberto, use `PENDENTE` com `paidAt` ausente. O Swagger apresenta os campos obrigatórios e os formatos aceitos em cada operação.
 
 ## Idempotência e limite de requisições
 
 Na versão `2.0.0`, todo `POST` precisa de `X-Idempotency-Key`. Para chamadas fora do Swagger, gere um UUID no cliente e reutilize a chave com o mesmo corpo em cada tentativa da operação. Um `POST` válido sem a chave recebe `400 Bad Request`. Nas versões `1.0.0` e `1.0.1`, o servidor processa cada envio separadamente e ignora o cabeçalho.
 
-Durante 24 horas, a mesma credencial recebe o resultado original e o cabeçalho `Idempotency-Replayed: true`. Um reenvio enquanto a criação está em andamento, ou com dados diferentes, retorna `409`. O histórico de idempotência e os limites ficam na memória da instância.
+Durante até 24 horas, repetir a chave de idempotência com o mesmo corpo, credencial, conta e endpoint retorna o resultado original e o cabeçalho `Idempotency-Replayed: true`. Um reenvio enquanto a criação está em andamento, ou com dados diferentes, retorna `409`. Use uma nova chave para cada nova criação.
 
 No Swagger UI, **Try it out** preenche o campo vazio com um UUID na `2.0.0`. A chave continua visível depois de **Execute**. Para começar uma nova criação, limpe o campo antes de executar ou informe outra chave. Ao selecionar uma versão 1.x, o campo some da operação.
 
-Cada chamada consome um token. A Básica repõe um token por segundo e a Premium repõe cinco por segundo. Consulte `X-RateLimit-Limit` e `X-RateLimit-Remaining` para acompanhar a capacidade disponível. Na Demo, cada IP tem seu próprio saldo de 30 req/min e todos os IPs também consomem de um saldo compartilhado de 300 req/min. Os cabeçalhos mostram a cota do IP, exceto quando o bloqueio vem da cota compartilhada. Ao receber `429`, aguarde o número de segundos indicado em `Retry-After`. O IP é o endereço remoto informado pelo servidor. Em uma implantação atrás de proxy, configure o servidor para confiar somente no proxy que controla o cabeçalho de encaminhamento.
+Cada chamada consome uma unidade do saldo, que é reposto continuamente até a capacidade do plano. Se houver saldo, várias chamadas podem ser feitas em sequência. Em chamadas espaçadas, o saldo pode se recuperar entre as requisições, fazendo o valor de `X-RateLimit-Remaining` permanecer igual.
+
+Consulte `X-RateLimit-Limit` para conhecer a capacidade da cota e `X-RateLimit-Remaining` para acompanhar o saldo disponível. Na Demo, uma chamada consome tanto a cota do IP quanto a compartilhada. Os cabeçalhos mostram a cota do IP, exceto quando o bloqueio vem da cota compartilhada. Ao receber `429`, aguarde o número de segundos indicado em `Retry-After` antes de tentar novamente.
 
 ## Versionamento
 
@@ -98,7 +105,7 @@ Envie `X-API-Version` com `1.0.0`, `1.0.1` ou `2.0.0`. Sem o cabeçalho, a API u
 | `409 Conflict` | Conflito de idempotência, valor único duplicado ou vínculo incompatível com a operação. |
 | `415 Unsupported Media Type` | Formato do corpo não aceito. |
 | `429 Too Many Requests` | Limite excedido, com `Retry-After` em segundos. |
-| `503 Service Unavailable` | O armazenamento temporário de idempotência atingiu a capacidade. |
+| `503 Service Unavailable` | Na versão `2.0.0`, o armazenamento temporário de idempotência atingiu a capacidade. |
 
 Erros da aplicação usam `application/problem+json` com `status` e `detail`. Quando o corpo falha na validação, `errors` identifica os campos e descreve o problema. A exclusão de um registro de domínio inexistente retorna `404` com corpo vazio.
 
@@ -110,10 +117,10 @@ Na inicialização, o sistema cria na conta de demonstração 22 empresas, 47 co
 
 Os estados de contrato incluem ATIVO, RASCUNHO, SUSPENSO, ENCERRADO e CANCELADO, os estados de fatura incluem PENDENTE, PAGO, VENCIDO, ATRASADO e CANCELADO, os tipos de pagamento incluem PIX, BOLETO, TRANSFERENCIA e CARTAO.
 
-## Organização do código
+## Ambiente de demonstração
 
-Cada recurso tem entidade, repositório, montador de links e controlador. Um tratador global converte erros de validação, autorização e persistência em respostas HTTP. A política de acesso, o limite de requisições e o mecanismo de idempotência são compartilhados entre os controladores.
+Os registros são mantidos em memória. Reinicializações do serviço recriam os dados de demonstração e descartam alterações, contas e chaves de cliente emitidas anteriormente. O histórico de idempotência e os saldos de requisições também são reiniciados. Considere esse comportamento ao testar integrações e repetir operações após uma interrupção.
 
-## Decisões de modelagem
+## Relacionamentos e isolamento
 
-`Account` identifica a organização que usa a API e é dona de cada `Company`. Contatos, contratos e meios de pagamento herdam a conta pela empresa. Faturas herdam a conta pelo contrato. O isolamento é aplicado nas consultas, escritas e verificações de vínculos. Cada meio de pagamento guarda uma referência operacional em `details`.
+A conta representa a organização que utiliza a API. Cada empresa pertence a uma conta, enquanto contatos, contratos e meios de pagamento estão vinculados à empresa. As faturas ficam vinculadas ao contrato. Essa estrutura mantém os dados de cada organização separados nas consultas e alterações. Cada meio de pagamento guarda sua referência operacional em `details`.

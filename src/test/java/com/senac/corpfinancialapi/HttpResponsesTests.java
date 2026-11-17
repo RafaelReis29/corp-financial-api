@@ -1,6 +1,9 @@
 package com.senac.corpfinancialapi;
 
 import java.net.URI;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import com.jayway.jsonpath.JsonPath;
@@ -26,7 +29,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest(properties = "corp-financial-api.admin-key=" + HttpResponsesTests.ADMIN_KEY)
+@SpringBootTest(properties = {
+        "corp-financial-api.admin-key=" + HttpResponsesTests.ADMIN_KEY,
+        "corp-financial-api.requests-per-minute=1000"
+})
 @AutoConfigureMockMvc
 class HttpResponsesTests {
 
@@ -48,7 +54,7 @@ class HttpResponsesTests {
 
     @ParameterizedTest
     @ValueSource(strings = {"/companies", "/contacts", "/contracts", "/invoices", "/payment-methods"})
-    void openApiDocumentsMissingRecordsAndAdminAccounts(String path) throws Exception {
+    void openApiDocumentsResourceResponses(String path) throws Exception {
         String collection = "$.paths['" + path + "']";
         String item = "$.paths['" + path + "/{id}']";
 
@@ -56,18 +62,43 @@ class HttpResponsesTests {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath(collection + ".get.responses['200']").exists())
                 .andExpect(jsonPath(collection + ".get.responses['400']").exists())
-                .andExpect(jsonPath(collection + ".get.responses['404']").exists())
-                .andExpect(jsonPath(collection + ".post.responses['404']").exists())
+                .andExpect(jsonPath(collection + ".get.responses['404']").doesNotExist())
+                .andExpect(jsonPath(collection + ".post.responses['404']").doesNotExist())
                 .andExpect(jsonPath(collection + ".post.responses['201'].headers.Location").doesNotExist())
-                .andExpect(jsonPath(item + ".put.responses['404']").exists())
+                .andExpect(jsonPath(item + ".put.responses['404']").doesNotExist())
                 .andExpect(jsonPath(item + ".put.responses['201'].headers.Location").doesNotExist())
                 .andExpect(jsonPath(item + ".get.responses['400']").exists())
                 .andExpect(jsonPath(item + ".get.responses['404'].content['application/problem+json'].schema['$ref']").value("#/components/schemas/ApiProblem"))
                 .andExpect(jsonPath(item + ".delete.responses['400']").exists())
                 .andExpect(jsonPath(item + ".delete.responses['404']").exists())
-                .andExpect(jsonPath(item + ".delete.responses['404'].content['application/problem+json']").exists())
+                .andExpect(jsonPath(item + ".delete.responses['404'].content").doesNotExist())
                 .andExpect(jsonPath(item + ".delete.responses['204']").exists())
                 .andExpect(jsonPath(item + ".delete.responses['204'].content").doesNotExist());
+    }
+
+    @Test
+    void openApiLimitsConflictResponsesToOperationsThatCanConflict() throws Exception {
+        String spec = perform(get("/v3/api-docs")).andReturn().getResponse().getContentAsString();
+        for (String path : List.of("companies", "contacts", "contracts", "invoices", "payment-methods")) {
+            Map<String, Object> collection = JsonPath.read(spec, "$.paths['/" + path + "'].get.responses");
+            assertThat(collection.keySet()).containsExactlyInAnyOrder("200", "400", "401", "429");
+            Map<String, Object> deletion = JsonPath.read(spec, "$.paths['/" + path + "/{id}'].delete.responses");
+            assertThat(deletion.containsKey("409")).isEqualTo(Set.of("companies", "contracts", "payment-methods").contains(path));
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"/accounts", "/api-keys", "/companies", "/contacts", "/contracts", "/invoices", "/payment-methods"})
+    void openApiIdentifiesResponsesExclusiveToVersionTwo(String path) throws Exception {
+        String post = "$.paths['" + path + "'].post.responses";
+        var result = perform(get("/v3/api-docs"))
+                .andExpect(jsonPath(post + "['503']['x-api-versions'][0]").value("2.0.0"))
+                .andExpect(jsonPath(post + "['201'].headers['Idempotency-Replayed']['x-api-versions'][0]").value("2.0.0"));
+        if (path.equals("/accounts") || path.equals("/api-keys")) {
+            result.andExpect(jsonPath(post + "['409']['x-api-versions'][0]").value("2.0.0"));
+        } else {
+            result.andExpect(jsonPath(post + "['409']['x-api-versions']").doesNotExist());
+        }
     }
 
     @ParameterizedTest
@@ -85,6 +116,18 @@ class HttpResponsesTests {
         perform(delete(path + "/{id}", MISSING_ID))
                 .andExpect(status().isNotFound())
                 .andExpect(content().string(""));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"1.0.1", "2.0.0"})
+    void correctedVersionsReturnEmptyListsAndMissingItemsAsDocumented(String version) throws Exception {
+        for (String path : List.of("/companies", "/contacts", "/contracts", "/invoices", "/payment-methods")) {
+            perform(get(path).header(ApiHeaders.VERSION, version).param("page", "999999"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$._embedded").doesNotExist());
+            perform(get(path + "/{id}", MISSING_ID).header(ApiHeaders.VERSION, version))
+                    .andExpect(status().isNotFound());
+        }
     }
 
     @ParameterizedTest

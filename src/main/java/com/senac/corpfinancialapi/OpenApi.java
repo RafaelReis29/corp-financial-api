@@ -1,6 +1,7 @@
 package com.senac.corpfinancialapi;
 
 import java.util.List;
+import java.util.Map;
 
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
@@ -57,6 +58,8 @@ public class OpenApi {
 
                                 ### Administração
                                 O Admin cria contas em `POST /accounts` e emite chaves em `POST /api-keys`. Para acessar registros de uma conta com a chave Admin, use `X-Account-Id` para escolher a conta. A exclusão de uma empresa exige esse cabeçalho e a chave Admin. Nas demais operações, o Admin acessa a conta de demonstração por padrão.
+
+                                As listagens retornam 200 mesmo quando vazias. Se o Admin indicar uma conta inexistente em `X-Account-Id`, a seleção de conta retorna 404 antes da operação. Esse erro do cabeçalho também pode ocorrer em listagens, criações e atualizações.
                                 """.formatted(ApiKeys.PUBLIC_DEMO_KEY))
                         .termsOfService("/static/terms.html")
                         .license(new License().name("MIT").url("https://mit-license.org/"))
@@ -100,10 +103,12 @@ public class OpenApi {
         boolean management = ApiRequestPolicy.isManagement(path);
         boolean adminOnly = ApiRequestPolicy.requiresAdmin(path, verb);
         boolean delete = "DELETE".equals(verb);
+        boolean item = path.endsWith("/{id}");
         if (!management) {
             operation.addParametersItem(new HeaderParameter().name(ApiHeaders.ACCOUNT_ID).required(adminOnly)
-                    .description(adminOnly ? "ID da conta proprietária. Obrigatório com a chave de administração."
+                    .description((adminOnly ? "ID da conta proprietária. Obrigatório com a chave de administração."
                             : "Conta cujos registros o Admin quer acessar. O padrão do Admin é a demonstração. Chaves de cliente usam a conta da credencial.")
+                            + " UUID malformado retorna 400. Conta inexistente selecionada pelo Admin retorna 404 antes da operação.")
                     .schema(new StringSchema().format("uuid")));
         }
         if (adminOnly) {
@@ -116,25 +121,33 @@ public class OpenApi {
                     .description("Obrigatório no POST da versão 2.0.0. O Swagger preenche o campo vazio automaticamente. Reutilize a chave com o mesmo corpo nas tentativas por até 24 horas.")
                     .schema(new StringSchema().pattern("[A-Za-z0-9._~-]{1,128}")));
             operation.getResponses().get("201")
-                    .addHeaderObject(ApiHeaders.IDEMPOTENCY_REPLAYED, new Header().description("Na versão 2.0.0, indica que a resposta original foi reaproveitada").schema(new StringSchema()._enum(List.of("true"))));
-            addProblem(operation, "503", "Armazenamento temporário de idempotência da versão 2.0.0 indisponível");
+                    .addHeaderObject(ApiHeaders.IDEMPOTENCY_REPLAYED, new Header().description("Na versão 2.0.0, indica que a resposta original foi reaproveitada")
+                            .schema(new StringSchema()._enum(List.of("true")))
+                            .extensions(Map.of("x-api-versions", List.of("2.0.0"))));
+            addProblem(operation, "503", "Armazenamento temporário de idempotência da versão 2.0.0 indisponível")
+                    .addExtension("x-api-versions", List.of("2.0.0"));
         }
         if (writesBody) {
             addProblem(operation, "415", "Formato do corpo não aceito");
         }
-        if (writesBody || (delete && !management)) {
-            addProblem(operation, "409", post ? "Conflito de dados ou de chave idempotente" : "Conflito de dados");
+        if (writesBody && !management) {
+            addProblem(operation, "409", post ? "Conflito de dados. Na versão 2.0.0, também pode indicar conflito de chave idempotente." : "Conflito de dados ou de referências da conta");
+        } else if (post) {
+            addProblem(operation, "409", "Conflito de chave idempotente da versão 2.0.0")
+                    .addExtension("x-api-versions", List.of("2.0.0"));
+        } else if (delete && List.of("/companies/{id}", "/contracts/{id}", "/payment-methods/{id}").contains(path)) {
+            addProblem(operation, "409", "O registro possui dependências que impedem a exclusão");
         }
         addProblem(operation, "400", "Parâmetros, versão, identificador ou corpo inválido");
-        if (!management) {
-            ApiResponse notFound = addProblem(operation, "404", "Conta indicada pelo Admin não encontrada");
-            if (delete) {
-                notFound.setDescription("Registro não encontrado para a conta selecionada (corpo vazio) ou conta indicada pelo Admin não encontrada");
-            } else if ("GET".equals(verb) && path.endsWith("/{id}")) {
-                notFound.setDescription("Registro não encontrado para a conta selecionada ou conta indicada pelo Admin não encontrada");
-            }
-        } else if (operation.getResponses().containsKey("404")) {
+        if (!management && item && "GET".equals(verb)) {
+            addProblem(operation, "404", "Registro não encontrado para a conta selecionada");
+        } else if (!management && item && delete) {
+            operation.getResponses().get("404").description("Registro não encontrado para a conta selecionada (corpo vazio)").content(null);
+        } else if (management && operation.getResponses().containsKey("404")) {
             addProblem(operation, "404", operation.getResponses().get("404").getDescription());
+        }
+        if (operation.getResponses().containsKey("204")) {
+            operation.getResponses().get("204").content(null);
         }
         addProblem(operation, "429", "Limite de requisições excedido")
                 .addHeaderObject(HttpHeaders.RETRY_AFTER, integerHeader("Segundos até a próxima tentativa"));

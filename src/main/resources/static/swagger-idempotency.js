@@ -60,6 +60,18 @@
 
         return {
             wrapComponents: {
+                responses: (Original, { React }) => props => {
+                    const version = React.useSyncExternalStore(subscribe, () => selectedVersion([props.path, props.method]));
+                    const supportsVersion = value => {
+                        const supported = value.get("x-api-versions");
+                        return !supported || supported.includes(version);
+                    };
+                    const responses = props.responses?.filter(supportsVersion).map(response => {
+                        const headers = response.get("headers");
+                        return headers ? response.set("headers", headers.filter(supportsVersion)) : response;
+                    });
+                    return React.createElement(Original, { ...props, responses });
+                },
                 Topbar: (Original, { React }) => () => {
                     const value = React.useSyncExternalStore(subscribe, () => defaultVersion);
                     return React.createElement("header", { className: "topbar" },
