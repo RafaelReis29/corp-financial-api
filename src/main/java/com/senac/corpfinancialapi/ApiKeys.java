@@ -10,12 +10,15 @@ import java.util.HexFormat;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service
 class ApiKeys {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(ApiKeys.class);
     private static final Pattern CLIENT_KEY = Pattern.compile("cf_(?:basic|premium|demo)_[A-Za-z0-9_-]{43}");
     static final String PUBLIC_DEMO_KEY = "cf_demo_0123456789abcdefghijklmnopqrstuvwxyzABCDEFG";
     private final SecureRandom random = new SecureRandom();
@@ -31,6 +34,11 @@ class ApiKeys {
         }
         this.repository = repository;
         this.adminHash = adminKey.isEmpty() ? null : hash(adminKey.getBytes(StandardCharsets.US_ASCII));
+        if (adminHash == null) {
+            LOGGER.warn("CORP_API_ADMIN_KEY is unset or empty. Administrative operations are disabled.");
+        } else {
+            LOGGER.info("CORP_API_ADMIN_KEY is configured. Administrative authentication is enabled.");
+        }
     }
 
     Identity authenticate(String key) {

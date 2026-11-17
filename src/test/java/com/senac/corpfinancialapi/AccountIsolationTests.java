@@ -5,6 +5,8 @@ import java.util.UUID;
 
 import com.jayway.jsonpath.JsonPath;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -24,12 +26,97 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest(properties = "corp-financial-api.admin-key=" + ADMIN_KEY)
+@SpringBootTest(properties = {
+        "corp-financial-api.admin-key=" + ADMIN_KEY,
+        "corp-financial-api.requests-per-minute=1000"
+})
 @AutoConfigureMockMvc
 class AccountIsolationTests {
 
     @Autowired
     private MockMvc mvc;
+
+    @Test
+    void planMustBeSpecifiedByName() throws Exception {
+        String account = createAccount("Named key plans");
+        for (String type : new String[]{"0", "1", "\"1\""}) {
+            mvc.perform(post("/api-keys").header(ApiHeaders.API_KEY, ADMIN_KEY)
+                            .header(ApiHeaders.IDEMPOTENCY_KEY, UUID.randomUUID())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("""
+                                    {"label":"Integração","accountId":"%s","type":%s}
+                                    """.formatted(account, type)))
+                    .andExpect(status().isBadRequest());
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"1.0.0", "1.0.1", "2.0.0"})
+    void bothPlansCanWriteTheirAccountRecordsInEveryVersion(String version) throws Exception {
+        String account = createAccount("CRUD " + version);
+        String basic = issue(account, "BASIC");
+        String premium = issue(account, "PREMIUM");
+        String doc = "CRUD-" + version;
+        String companyBody = """
+                {"tradeName":"Company from PUT","docNumber":"%s"}
+                """.formatted(doc);
+        String company = upsertMissing("/companies", basic, version, companyBody);
+        long companyId = pathId(company);
+        String contactBody = """
+                {"companyId":%d,"name":"Contact from PUT"}
+                """.formatted(companyId);
+        String contractBody = """
+                {"companyId":%d,"title":"Contract from PUT","totalValue":100,"currency":"BRL",
+                 "startDate":"2026-01-01","status":"ATIVO"}
+                """.formatted(companyId);
+        String paymentBody = """
+                {"companyId":%d,"type":"PIX","label":"Payment method from PUT"}
+                """.formatted(companyId);
+        String contact = upsertMissing("/contacts", premium, version, contactBody);
+        String contract = upsertMissing("/contracts", basic, version, contractBody);
+        String payment = upsertMissing("/payment-methods", premium, version, paymentBody);
+        String invoiceBody = """
+                {"contractId":%d,"paymentMethodId":%d,"amount":100,"dueDate":"2026-12-01","status":"PENDENTE"}
+                """.formatted(pathId(contract), pathId(payment));
+        String invoice = upsertMissing("/invoices", basic, version, invoiceBody);
+
+        mvc.perform(put(invoice).header(ApiHeaders.API_KEY, premium).header(ApiHeaders.VERSION, version)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(invoiceBody.replace("\"status\":\"PENDENTE\"", "\"status\":\"PAGO\",\"paidAt\":\"2026-12-01T12:00:00\"")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("PAGO"));
+
+        for (String path : new String[]{invoice, payment, contract, contact, company}) {
+            mvc.perform(get(path).header(ApiHeaders.API_KEY, basic).header(ApiHeaders.VERSION, version))
+                    .andExpect(status().isOk());
+            mvc.perform(get(path).header(ApiHeaders.API_KEY, premium).header(ApiHeaders.VERSION, version))
+                    .andExpect(status().isOk());
+            mvc.perform(get(path).header(ApiHeaders.API_KEY, ADMIN_KEY).header(ApiHeaders.VERSION, version)
+                            .header(ApiHeaders.ACCOUNT_ID, account))
+                    .andExpect(status().isOk());
+            mvc.perform(get(path).header(ApiHeaders.API_KEY, ApiKeys.PUBLIC_DEMO_KEY)
+                            .header(ApiHeaders.ACCOUNT_ID, account).header(ApiHeaders.VERSION, version))
+                    .andExpect(status().isNotFound());
+            if (!path.equals(company)) {
+                mvc.perform(delete(path).header(ApiHeaders.API_KEY, premium).header(ApiHeaders.VERSION, version))
+                        .andExpect(status().isNoContent());
+            }
+        }
+        mvc.perform(delete(company).header(ApiHeaders.API_KEY, ADMIN_KEY).header(ApiHeaders.VERSION, version)
+                        .header(ApiHeaders.ACCOUNT_ID, account))
+                .andExpect(status().isNoContent());
+    }
+
+    private String upsertMissing(String collection, String key, String version, String body) throws Exception {
+        String missing = collection + "/" + Long.MAX_VALUE;
+        var created = mvc.perform(put(missing).header(ApiHeaders.API_KEY, key).header(ApiHeaders.VERSION, version)
+                        .contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isCreated())
+                .andReturn();
+        String location = location(created);
+        assertThat(location).startsWith(collection + "/").isNotEqualTo(missing);
+        return location;
+    }
 
     @Test
     void paidKeysAccessIndependentAccountRecordsAndCompanyDeletionRequiresAdmin() throws Exception {

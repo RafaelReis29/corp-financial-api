@@ -54,7 +54,7 @@ public class ContactController {
     @GetMapping("/contacts")
     public ResponseEntity<PagedModel<EntityModel<Contact>>> getAllContacts(
             @ParameterObject @PageableDefault(size = 10, page = 0, sort = "id") Pageable pageable) {
-        Page<Contact> contactPage = repository.findAllByCompany_Account_Id(scope.accountId(), pageable);
+        Page<Contact> contactPage = repository.findAllByCompany_Account_Id(scope.accountId(), scope.validateSort(pageable, Contact.class));
         PagedModel<EntityModel<Contact>> pagedModel = pagedResourcesAssembler.toModel(contactPage, assembler);
         return ResponseEntity.ok(pagedModel);
     }

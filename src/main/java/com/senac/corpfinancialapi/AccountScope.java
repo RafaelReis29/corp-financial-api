@@ -2,7 +2,10 @@ package com.senac.corpfinancialapi;
 
 import java.util.UUID;
 
+import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.metamodel.Attribute;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ResponseStatusException;
@@ -16,13 +19,15 @@ class AccountScope {
     private final CompanyRepository companies;
     private final ContractRepository contracts;
     private final PaymentMethodRepository paymentMethods;
+    private final EntityManagerFactory entityManagerFactory;
 
     AccountScope(HttpServletRequest request, CompanyRepository companies, ContractRepository contracts,
-                 PaymentMethodRepository paymentMethods) {
+                 PaymentMethodRepository paymentMethods, EntityManagerFactory entityManagerFactory) {
         this.request = request;
         this.companies = companies;
         this.contracts = contracts;
         this.paymentMethods = paymentMethods;
+        this.entityManagerFactory = entityManagerFactory;
     }
 
     Account account() {
@@ -31,6 +36,18 @@ class AccountScope {
 
     UUID accountId() {
         return account().id();
+    }
+
+    Pageable validateSort(Pageable pageable, Class<?> entityType) {
+        var attributes = entityManagerFactory.getMetamodel().entity(entityType).getSingularAttributes();
+        for (var order : pageable.getSort()) {
+            boolean sortable = attributes.stream().anyMatch(attribute -> attribute.getName().equals(order.getProperty())
+                    && attribute.getPersistentAttributeType() == Attribute.PersistentAttributeType.BASIC);
+            if (!sortable) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Ordene por um campo do próprio recurso.");
+            }
+        }
+        return pageable;
     }
 
     void requireCompany(Long companyId) {

@@ -54,7 +54,7 @@ public class ContractController {
     @GetMapping("/contracts")
     public ResponseEntity<PagedModel<EntityModel<Contract>>> getAllContracts(
             @ParameterObject @PageableDefault(size = 10, page = 0, sort = "id") Pageable pageable) {
-        Page<Contract> contractPage = repository.findAllByCompany_Account_Id(scope.accountId(), pageable);
+        Page<Contract> contractPage = repository.findAllByCompany_Account_Id(scope.accountId(), scope.validateSort(pageable, Contract.class));
         PagedModel<EntityModel<Contract>> pagedModel = pagedResourcesAssembler.toModel(contractPage, assembler);
         return ResponseEntity.ok(pagedModel);
     }

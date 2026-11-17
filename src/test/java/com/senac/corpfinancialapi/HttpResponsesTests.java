@@ -92,6 +92,10 @@ class HttpResponsesTests {
         perform(get(path).param("sort", "unknownField,asc"))
                 .andExpect(status().isBadRequest());
 
+        perform(get(path).param("sort", "class,asc"))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON));
+
         perform(get(path + "/invalid"))
                 .andExpect(status().isBadRequest());
 

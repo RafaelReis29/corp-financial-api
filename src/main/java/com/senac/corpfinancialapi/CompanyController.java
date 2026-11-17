@@ -54,7 +54,7 @@ public class CompanyController {
     @GetMapping("/companies")
     public ResponseEntity<PagedModel<EntityModel<Company>>> getAllCompanies(
             @ParameterObject @PageableDefault(size = 10, page = 0, sort = "id") Pageable pageable) {
-        Page<Company> companyPage = repository.findAllByAccount_Id(scope.accountId(), pageable);
+        Page<Company> companyPage = repository.findAllByAccount_Id(scope.accountId(), scope.validateSort(pageable, Company.class));
         PagedModel<EntityModel<Company>> pagedModel = pagedResourcesAssembler.toModel(companyPage, assembler);
         return ResponseEntity.ok(pagedModel);
     }

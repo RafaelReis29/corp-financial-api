@@ -243,11 +243,25 @@ class AdvancedApiTests {
                 .andExpect(status().isOk())
                 .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "http://localhost:5173"))
                 .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_HEADERS, containsString(ApiHeaders.API_KEY)));
+        mvc.perform(options("/accounts")
+                        .header(HttpHeaders.ORIGIN, "http://127.0.0.1:3000")
+                        .header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, "GET")
+                        .header(HttpHeaders.ACCESS_CONTROL_REQUEST_HEADERS, "X-API-Key,X-API-Version"))
+                .andExpect(status().isOk())
+                .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "http://127.0.0.1:3000"));
         mvc.perform(options("/invoices")
                         .header(HttpHeaders.ORIGIN, "https://unlisted.example")
                         .header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, "POST"))
                 .andExpect(status().isForbidden())
                 .andExpect(header().doesNotExist(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN));
+    }
+
+    @Test
+    void rejectsSortsOnFieldsOutsideTheResource() throws Exception {
+        mvc.perform(get("/companies").header(ApiHeaders.API_KEY, ADMIN_KEY).param("sort", "account.name,asc"))
+                .andExpect(status().isBadRequest());
+        mvc.perform(get("/companies").header(ApiHeaders.API_KEY, ADMIN_KEY).param("sort", "tradeName,desc"))
+                .andExpect(status().isOk());
     }
 
     @Test

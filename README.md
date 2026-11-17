@@ -30,16 +30,22 @@ Com Java 17, execute `sh mvnw spring-boot:run`. O banco H2 em memória é inicia
 | Variável de ambiente | Uso |
 | --- | --- |
 | `CORP_API_ADMIN_KEY` | Chave de administração, com 32 a 256 caracteres ASCII visíveis. Configure-a para emitir as primeiras chaves de cliente. |
-| `CORP_API_CORS_ORIGINS` | Origens autorizadas, separadas por vírgulas. Por padrão, `http://localhost:3000` e `http://localhost:5173`. Informe a origem do seu front-end na implantação. |
+| `CORP_API_CORS_ORIGINS` | Origens autorizadas, separadas por vírgulas. Os padrões são `localhost` e `127.0.0.1`, via HTTP nas portas 3000 e 5173. Se definir a variável, informe todas as origens necessárias, com protocolo, domínio e porta quando aplicável. |
 | `CORP_API_REQUESTS_PER_MINUTE` | Limite da chave Admin e das requisições sem chave válida, por IP. O padrão é 120 por minuto. |
 
-Para consultas paginadas, use `page`, `size` e `sort`. Para atualização, envie o corpo completo. Para baixa de fatura, envie o status `PAGO` com `paidAt` preenchido. Para fatura em aberto, use `PENDENTE` com `paidAt` ausente.
+Para consultas paginadas, use `page`, `size` e `sort`. A ordenação usa campos do próprio recurso, por exemplo `sort=tradeName,asc` para empresas. Para atualização, envie o corpo completo. Para baixa de fatura, envie o status `PAGO` com `paidAt` preenchido. Para fatura em aberto, use `PENDENTE` com `paidAt` ausente.
 
 ## Contas e chaves
 
 A conta identifica a organização que usa a API. Cada empresa cadastrada representa um cliente e pertence a uma única conta. O `docNumber` deve ser único por conta. Duas contas podem cadastrar o mesmo documento e manter registros independentes.
 
 Use `X-API-Key` em todas as operações. No Swagger UI, clique em **Authorize** e informe a credencial.
+
+### Verificar a chave Admin
+
+No Render, defina `CORP_API_ADMIN_KEY` nas variáveis de ambiente do serviço do backend. Cole apenas o valor da chave e faça um deploy para carregar a configuração. Ao iniciar, a API registra se a variável está configurada, sem imprimir seu valor.
+
+Teste primeiro `GET /accounts` no Swagger com a chave Admin. Um `200` confirma o acesso administrativo. Um `401` indica que o serviço não reconheceu a chave. Confira o valor configurado e o último deploy. Se o Swagger funcionar e o front-end falhar, confira se `CORP_API_CORS_ORIGINS` inclui a origem exata do front-end.
 
 | Chave | Mensalidade de referência | Limite | Operações |
 | --- | ---: | --- | --- |

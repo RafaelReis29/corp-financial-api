@@ -52,7 +52,7 @@ public class PaymentMethodController {
     @GetMapping("/payment-methods")
     public ResponseEntity<PagedModel<EntityModel<PaymentMethod>>> getAllPaymentMethods(
             @ParameterObject @PageableDefault(size = 10, page = 0, sort = "id") Pageable pageable) {
-        Page<PaymentMethod> paymentMethodPage = repository.findAllByCompany_Account_Id(scope.accountId(), pageable);
+        Page<PaymentMethod> paymentMethodPage = repository.findAllByCompany_Account_Id(scope.accountId(), scope.validateSort(pageable, PaymentMethod.class));
         PagedModel<EntityModel<PaymentMethod>> pagedModel = pagedResourcesAssembler.toModel(paymentMethodPage, assembler);
         return ResponseEntity.ok(pagedModel);
     }

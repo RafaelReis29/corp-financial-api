@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.CacheControl;
@@ -51,11 +52,11 @@ class ApiKeyController {
         return posts.execute(request, () -> {
             Account account = accounts.findById(request.accountId())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Conta não encontrada."));
-            if (account.demo() || request.type() == ApiKeyType.DEMO) {
+            if (account.demo()) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                         "Escolha BASIC ou PREMIUM e informe uma conta de cliente.");
             }
-            ApiKeys.IssuedKey issued = keys.issue(request.label().strip(), account, request.type());
+            ApiKeys.IssuedKey issued = keys.issue(request.label().strip(), account, ApiKeyType.valueOf(request.type()));
             KeyMetadata metadata = KeyMetadata.from(issued.credential());
             var location = ServletUriComponentsBuilder.fromCurrentRequestUri().path("/{id}").buildAndExpand(metadata.id()).toUri();
             return ResponseEntity.created(location).cacheControl(CacheControl.noStore()).body(new KeyCreated(metadata, issued.secret()));
@@ -90,7 +91,8 @@ class ApiKeyController {
     }
 
     record CreateKey(@NotBlank @Size(max = 80) String label, @NotNull UUID accountId,
-                     @NotNull @Schema(allowableValues = {"BASIC", "PREMIUM"}, example = "BASIC") ApiKeyType type) {
+                     @NotBlank @Pattern(regexp = "BASIC|PREMIUM", message = "Informe BASIC ou PREMIUM.")
+                     @Schema(allowableValues = {"BASIC", "PREMIUM"}, example = "BASIC") String type) {
     }
 
     record KeyMetadata(UUID id, String label, UUID accountId, ApiKeyType type, Instant createdAt) {

@@ -52,7 +52,7 @@ public class InvoiceController {
     @GetMapping("/invoices")
     public ResponseEntity<PagedModel<EntityModel<Invoice>>> getAllInvoices(
             @ParameterObject @PageableDefault(size = 10, page = 0, sort = "id") Pageable pageable) {
-        Page<Invoice> invoicePage = repository.findAllByContract_Company_Account_Id(scope.accountId(), pageable);
+        Page<Invoice> invoicePage = repository.findAllByContract_Company_Account_Id(scope.accountId(), scope.validateSort(pageable, Invoice.class));
         PagedModel<EntityModel<Invoice>> pagedModel = pagedResourcesAssembler.toModel(invoicePage, assembler);
         return ResponseEntity.ok(pagedModel);
     }
